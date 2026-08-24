@@ -762,17 +762,16 @@ let state = {
 
 // ── FIRESTORE: DADOS ──────────────────────────────────────────────────────────
 async function carregarServicos(){
-  const snap = await db.collection('servicos').where('ativo','==',true).get();
-  if(snap.empty){
-    // primeira vez: semeia com os serviços padrão
-    const batch = db.batch();
-    DEFAULT_SERVICES.forEach(s=>{
-      const ref = db.collection('servicos').doc();
-      batch.set(ref, {...s, ativo:true, ordem: DEFAULT_SERVICES.indexOf(s)});
-    });
-    await batch.commit();
-    return carregarServicos();
+  try{
+    const snap = await db.collection('servicos').where('ativo','==',true).get();
+    SERVICES = snap.docs
+      .map(d=>({id:d.id, ...d.data()}))
+      .sort((a,b)=>(a.ordem??0)-(b.ordem??0));
+  }catch(e){
+    console.error('Erro ao carregar serviços:', e);
+    SERVICES = [];
   }
+}
   SERVICES = snap.docs
     .map(d=>({id:d.id, ...d.data()}))
     .sort((a,b)=>(a.ordem??0)-(b.ordem??0));
