@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BarberPro Admin — Painel do Empresário</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #C9A84C;
+  --gold-light: #E8C96B;
+  --gold-dark: #A07830;
+  --bg: #0A0A0A;
+  --bg2: #121212;
+  --bg3: #1A1A1A;
+  --card: #161616;
+  --border: #252525;
+  --text: #F0EDE8;
+  --text2: #9A9590;
+  --text3: #5A5550;
+  --success: #4CAF7D;
+  --danger: #E05252;
+  --info: #5294E0;
+  --warning: #E0A052;
+  --radius: 12px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.5);
+  --sidebar: 260px;
+}
+[data-theme="light"] {
+  --bg: #F0EBE0;
+  --bg2: #E8E0D0;
+  --bg3: #DDD5C5;
+  --card: #FFFFFF;
+  --border: #D0C8B8;
+  --text: #1A1510;
+  --text2: #5A5048;
+  --text3: #8A8078;
+  --shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--gold-dark);border-radius:3px}
+
+/* ── AUTH SCREEN ─────────────────────────────────── */
+#authScreen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:24px;position:relative;overflow:hidden;
+}
+.auth-bg{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 70% at 30% 50%, rgba(201,168,76,0.06) 0%, transparent 70%);
+}
+.auth-deco{
+  position:absolute;right:-100px;top:50%;transform:translateY(-50%);
+  font-size:400px;opacity:0.02;user-select:none;pointer-events:none;
+}
+.auth-card{
+  background:var(--card);border:1px solid var(--border);border-radius:20px;
+  width:100%;max-width:480px;padding:40px;position:relative;z-index:1;
+  box-shadow:var(--shadow);
+}
+.auth-logo{
+  text-align:center;margin-bottom:32px;
+}
+.auth-logo-icon{
+  width:72px;height:72px;border-radius:20px;
+  background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+  display:flex;align-items:center;justify-content:center;
+  font-size:36px;margin:0 auto 14px;
+}
+.auth-logo-title{
+  font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--gold);
+}
+.auth-logo-sub{font-size:13px;color:var(--text3);margin-top:4px}
+.auth-tabs{display:flex;background:var(--bg2);border-radius:10px;padding:4px;margin-bottom:28px}
+.auth-tab{
+  flex:1;padding:10px;text-align:center;border-radius:8px;cursor:pointer;
+  font-size:14px;font-weight:500;color:var(--text2);transition:all .2s;border:none;background:none;
+}
+.auth-tab.active{background:var(--gold);color:#0A0A0A;font-weight:700}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:7px}
+.form-input{
+  width:100%;padding:12px 16px;border-radius:10px;
+  background:var(--bg2);border:1px solid var(--border);
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;
+  transition:all .2s;outline:none;
+}
+.form-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,0.12)}
+.form-input::placeholder{color:var(--text3)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-section{
+  font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--gold);margin:20px 0 12px;padding-top:12px;border-top:1px solid var(--border);
+}
+.btn-primary{
+  width:100%;padding:14px;border-radius:10px;
+  background:var(--gold);color:#0A0A0A;
+  font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;
+  border:none;cursor:pointer;transition:all .25s;margin-top:8px;
+}
+.btn-primary:hover{background:var(--gold-light)}
+.back-link{
+  text-align:center;margin-top:20px;font-size:13px;color:var(--text3);
+}
+.back-link a{color:var(--gold);text-decoration:none}
+.back-link a:hover{text-decoration:underline}
+
+/* ── ADMIN LAYOUT ────────────────────────────────── */
+#adminApp{display:none;min-height:100vh}
+.admin-layout{display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{
+  width:var(--sidebar);min-height:100vh;
+  background:var(--card);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;z-index:100;
+  transition:transform .3s;
+}
+.sidebar-brand{
+  padding:24px 20px;border-bottom:1px solid var(--border);
+  font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--gold);
+  display:flex;align-items:center;gap:10px;
+}
+.sidebar-brand span{font-size:10px;font-weight:500;color:var(--text3);display:block;font-family:'DM Sans',sans-serif;margin-top:2px}
+.sidebar-nav{flex:1;padding:16px 12px;display:flex;flex-direction:column;gap:4px}
+.nav-item{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 14px;border-radius:10px;
+  font-size:14px;font-weight:500;color:var(--text2);
+  cursor:pointer;transition:all .2s;border:none;background:none;width:100%;text-align:left;
+}
+.nav-item:hover{background:var(--bg2);color:var(--text)}
+.nav-item.active{background:rgba(201,168,76,0.1);color:var(--gold);border-left:2px solid var(--gold);padding-left:12px}
+.nav-item-icon{font-size:18px;width:22px;text-align:center}
+.nav-badge{
+  margin-left:auto;background:var(--danger);color:#fff;
+  padding:2px 7px;border-radius:100px;font-size:11px;font-weight:700;
+}
+.sidebar-footer{padding:16px 12px;border-top:1px solid var(--border)}
+.admin-info{display:flex;align-items:center;gap:10px;padding:12px}
+.admin-avatar{
+  width:38px;height:38px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:#0A0A0A;
+  flex-shrink:0;
+}
+.admin-name{font-size:13px;font-weight:600;line-height:1.3}
+.admin-role{font-size:11px;color:var(--text3)}
+
+/* MAIN */
+.admin-main{
+  margin-left:var(--sidebar);flex:1;
+  display:flex;flex-direction:column;min-height:100vh;
+}
+.topbar{
+  height:64px;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--card);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:50;
+}
+.topbar-title{font-size:18px;font-weight:600}
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.icon-btn{
+  width:38px;height:38px;border-radius:9px;border:1px solid var(--border);
+  background:var(--bg2);color:var(--text2);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+  transition:all .2s;
+}
+.icon-btn:hover{border-color:var(--gold);color:var(--gold)}
+.content{padding:28px;flex:1}
+
+/* PAGES */
+.page{display:none}
+.page.active{display:block}
+
+/* DASHBOARD */
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px}
+.metric-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:22px;position:relative;overflow:hidden;
+}
+.metric-card::after{
+  content:'';position:absolute;top:0;right:0;bottom:0;width:3px;
+  background:var(--m-color, var(--gold));
+}
+.metric-label{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:8px}
+.metric-value{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:var(--text)}
+.metric-sub{font-size:12px;color:var(--text2);margin-top:6px}
+.metric-icon{position:absolute;top:18px;right:16px;font-size:26px;opacity:.4}
+.dashboard-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:800px){.dashboard-grid{grid-template-columns:1fr}}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.card-header{
+  padding:18px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.card-title{font-size:15px;font-weight:600}
+.card-body{padding:16px 20px}
+
+/* TABLE */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{
+  padding:10px 14px;text-align:left;
+  font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--text3);border-bottom:1px solid var(--border);background:var(--bg2);
+}
+td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border:none}
+tr:hover td{background:rgba(201,168,76,0.03)}
+.badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:4px 10px;border-radius:100px;font-size:11px;font-weight:600;
+}
+.badge.pending{background:rgba(201,168,76,0.12);color:var(--gold)}
+.badge.confirmed{background:rgba(76,175,125,0.12);color:var(--success)}
+.badge.done{background:rgba(90,90,90,0.15);color:var(--text3)}
+.badge.cancelled{background:rgba(224,82,82,0.12);color:var(--danger)}
+.status-btns{display:flex;gap:6px;flex-wrap:wrap}
+.status-btn{
+  padding:5px 10px;border-radius:7px;font-size:12px;font-weight:600;
+  cursor:pointer;border:none;transition:all .2s;
+}
+.status-btn.pending{background:rgba(201,168,76,0.1);color:var(--gold)}
+.status-btn.confirm{background:rgba(76,175,125,0.1);color:var(--success)}
+.status-btn.done{background:rgba(90,90,90,0.1);color:var(--text3)}
+.status-btn.cancel{background:rgba(224,82,82,0.1);color:var(--danger)}
+.status-btn:hover{filter:brightness(1.3)}
+
+/* CALENDAR PAGE */
+.cal-page-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:900px){.cal-page-grid{grid-template-columns:1fr}}
+.big-calendar{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.big-cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.big-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.big-cal-header{text-align:center;font-size:11px;font-weight:600;color:var(--text3);padding:8px 0}
+.big-cal-day{
+  aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-size:13px;cursor:pointer;transition:all .2s;border:1px solid transparent;
+  position:relative;
+}
+.big-cal-day:hover{background:rgba(201,168,76,0.1);border-color:rgba(201,168,76,.3)}
+.big-cal-day.today{border-color:var(--gold);color:var(--gold);font-weight:600}
+.big-cal-day.has-appt::after{
+  content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);
+  width:5px;height:5px;border-radius:50%;background:var(--gold);
+}
+.big-cal-day.selected{background:var(--gold);color:#0A0A0A;font-weight:700}
+.big-cal-day.empty,.big-cal-day.disabled{cursor:default;opacity:.3}
+.day-appointments{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.appt-item{
+  background:var(--bg2);border:1px solid var(--border);border-radius:10px;
+  padding:14px;margin-bottom:10px;
+}
+.appt-time-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,.3);
+  color:var(--gold);padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600;
+  margin-bottom:8px;
+}
+.appt-client{font-size:15px;font-weight:600}
+.appt-detail{font-size:12px;color:var(--text2);margin-top:3px}
+
+/* SERVICES PAGE */
+.services-admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.svc-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;transition:all .2s;
+}
+.svc-card:hover{border-color:var(--gold)}
+.svc-card-icon{font-size:28px;margin-bottom:12px}
+.svc-card-name{font-size:16px;font-weight:600;margin-bottom:4px}
+.svc-card-price{font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);font-weight:700}
+.svc-card-dur{font-size:12px;color:var(--text3);margin-top:4px}
+
+/* CLIENTS PAGE */
+.client-card{
+  background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:16px;display:flex;align-items:center;gap:14px;margin-bottom:10px;
+}
+.client-avatar{
+  width:44px;height:44px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold-dark),var(--gold));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:#0A0A0A;
+  flex-shrink:0;
+}
+.client-info .client-name{font-size:15px;font-weight:600}
+.client-info .client-email{font-size:12px;color:var(--text3);margin-top:2px}
+.client-info .client-phone{font-size:12px;color:var(--text2);margin-top:2px}
+.client-count{margin-left:auto;text-align:center}
+.client-count .cnt{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--gold)}
+.client-count .cnt-label{font-size:11px;color:var(--text3)}
+.wpp-btn-sm{
+  padding:7px 12px;border-radius:8px;background:#25D366;color:#fff;
+  font-size:12px;font-weight:600;border:none;cursor:pointer;
+  display:flex;align-items:center;gap:5px;transition:all .2s;text-decoration:none;
+}
+.wpp-btn-sm:hover{background:#20BB5A}
+
+/* SEARCH */
+.search-bar{
+  display:flex;gap:10px;margin-bottom:20px;
+}
+.search-input{
+  flex:1;padding:11px 16px;border-radius:10px;
+  background:var(--card);border:1px solid var(--border);
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;
+  transition:all .2s;
+}
+.search-input:focus{border-color:var(--gold)}
+.search-input::placeholder{color:var(--text3)}
+
+/* MODAL */
+.modal-overlay{
+  position:fixed;inset:0;z-index:2000;
+  background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+.modal-overlay.active{display:flex}
+.modal{
+  background:var(--card);border:1px solid var(--border);border-radius:20px;
+  width:100%;max-width:480px;max-height:90vh;overflow-y:auto;
+  animation:modalIn .3s ease;
+}
+.modal-header{padding:24px 24px 0;display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700}
+.modal-close{
+  background:var(--bg3);border:none;color:var(--text2);
+  width:34px;height:34px;border-radius:50%;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s;
+}
+.modal-close:hover{background:var(--danger);color:#fff}
+.modal-body{padding:20px 24px 24px}
+
+/* TOAST */
+.toast-container{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px}
+.toast{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:14px 18px;display:flex;align-items:center;gap:12px;
+  font-size:14px;box-shadow:var(--shadow);animation:toastIn .3s ease;
+  min-width:270px;max-width:340px;
+}
+.toast.success{border-left:3px solid var(--success)}
+.toast.error{border-left:3px solid var(--danger)}
+.toast.info{border-left:3px solid var(--info)}
+
+/* NOTIFICATION PANEL */
+.notif-panel{
+  position:fixed;top:0;right:-360px;width:360px;height:100vh;
+  background:var(--card);border-left:1px solid var(--border);
+  z-index:300;padding:24px;overflow-y:auto;transition:right .3s;
+}
+.notif-panel.open{right:0}
+.notif-item{
+  background:var(--bg2);border:1px solid var(--border);border-radius:10px;
+  padding:14px;margin-bottom:10px;
+}
+.notif-title{font-size:14px;font-weight:600}
+.notif-time{font-size:11px;color:var(--text3);margin-top:4px}
+
+/* SETTINGS PAGE */
+.settings-section{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:24px;margin-bottom:16px;
+}
+.settings-title{font-size:15px;font-weight:600;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.setting-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 0;border-bottom:1px solid var(--border);
+}
+.setting-row:last-child{border:none}
+.setting-info .setting-label{font-size:14px;font-weight:500}
+.setting-info .setting-desc{font-size:12px;color:var(--text3);margin-top:2px}
+.toggle{
+  width:44px;height:24px;border-radius:12px;cursor:pointer;
+  background:var(--bg3);border:1px solid var(--border);
+  position:relative;transition:background .2s;flex-shrink:0;
+}
+.toggle.on{background:var(--gold)}
+.toggle::after{
+  content:'';position:absolute;top:3px;left:3px;
+  width:16px;height:16px;border-radius:50%;background:#fff;
+  transition:left .2s;
+}
+.toggle.on::after{left:23px}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes modalIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+@keyframes toastIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+
+/* MOBILE MENU */
+.menu-toggle{
+  display:none;background:var(--bg2);border:1px solid var(--border);
+  color:var(--text);width:40px;height:40px;border-radius:9px;
+  align-items:center;justify-content:center;font-size:20px;cursor:pointer;
+}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay.visible{display:block}
+  .admin-main{margin-left:0}
+  .menu-toggle{display:flex}
+  .metrics-grid{grid-template-columns:1fr 1fr}
+  .cal-page-grid{grid-template-columns:1fr}
+  .content{padding:16px}
+  .topbar{padding:0 16px}
+  .dashboard-grid{grid-template-columns:1fr}
+  .form-row{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+  .metrics-grid{grid-template-columns:1fr}
+}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+</head>
+<body>
+
+<!-- ── AUTH SCREEN ─────────────────────────────────────────────────────────── -->
+<div id="authScreen">
+  <div class="auth-bg"></div>
+  <div class="auth-deco">✂</div>
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">✂</div>
+      <div class="auth-logo-title">BarberPro Admin</div>
+      <div class="auth-logo-sub">Área exclusiva para proprietários</div>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="atLogin" onclick="switchAuthTab('login')">Entrar</button>
+      <button class="auth-tab" id="atRegister" onclick="switchAuthTab('register')">Cadastrar Empresa</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="aLoginForm">
+      <div class="form-group">
+        <label class="form-label">E-mail do Proprietário</label>
+        <input class="form-input" type="email" id="aLoginEmail" placeholder="seu@email.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Senha</label>
+        <input class="form-input" type="password" id="aLoginPass" placeholder="••••••••">
+      </div>
+      <button class="btn-primary" onclick="adminLogin()">🔐 Acessar Painel</button>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="aRegisterForm" style="display:none">
+      <div class="form-section">📋 Dados do Proprietário</div>
+      <div class="form-group">
+        <label class="form-label">Nome completo</label>
+        <input class="form-input" id="aRegName" placeholder="Seu nome completo">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">E-mail</label>
+          <input class="form-input" type="email" id="aRegEmail" placeholder="email@negocio.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">CPF</label>
+          <input class="form-input" id="aRegCpf" placeholder="000.000.000-00">
+        </div>
+      </div>
+      <div class="form-section">🏪 Dados da Empresa</div>
+      <div class="form-group">
+        <label class="form-label">Nome da Empresa</label>
+        <input class="form-input" id="aRegBiz" placeholder="Ex: Barbearia do João">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tipo de Negócio</label>
+          <select class="form-input" id="aRegType" style="appearance:none">
+            <option value="barbearia">✂ Barbearia</option>
+            <option value="salao">💁 Salão de Beleza</option>
+            <option value="clinica">🏥 Clínica</option>
+            <option value="lavajato">🚗 Lava-Jato</option>
+            <option value="oficina">🔧 Oficina</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">WhatsApp da Empresa</label>
+          <input class="form-input" id="aRegWpp" placeholder="(11) 99999-9999">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">CNPJ (opcional)</label>
+          <input class="form-input" id="aRegCnpj" placeholder="00.000.000/0000-00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cidade</label>
+          <input class="form-input" id="aRegCity" placeholder="São Paulo - SP">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Endereço</label>
+        <input class="form-input" id="aRegAddr" placeholder="Rua, número, bairro">
+      </div>
+      <div class="form-section">🔒 Acesso</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Senha</label>
+          <input class="form-input" type="password" id="aRegPass" placeholder="Mín. 6 dígitos">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirmar Senha</label>
+          <input class="form-input" type="password" id="aRegPass2" placeholder="Repita a senha">
+        </div>
+      </div>
+      <button class="btn-primary" onclick="adminRegister()">🏪 Criar Conta de Empresa</button>
+    </div>
+
+    <div class="back-link">
+      <a href="index.html">← Voltar para o site</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADMIN APP ───────────────────────────────────────────────────────────── -->
+<div id="adminApp">
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+  <div class="admin-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <span style="font-size:24px">✂</span>
+        <div>
+          BarberPro
+          <span id="bizNameTag">Empresa</span>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" onclick="showPage('dashboard')">
+          <span class="nav-item-icon">📊</span> Dashboard
+        </button>
+        <button class="nav-item" onclick="showPage('appointments')">
+          <span class="nav-item-icon">📅</span> Agendamentos
+          <span class="nav-badge" id="pendingBadge">0</span>
+        </button>
+        <button class="nav-item" onclick="showPage('calendar')">
+          <span class="nav-item-icon">🗓</span> Calendário
+        </button>
+        <button class="nav-item" onclick="showPage('clients')">
+          <span class="nav-item-icon">👥</span> Clientes
+        </button>
+        <button class="nav-item" onclick="showPage('services')">
+          <span class="nav-item-icon">✂</span> Serviços
+        </button>
+        <button class="nav-item" onclick="showPage('history')">
+          <span class="nav-item-icon">📋</span> Histórico
+        </button>
+        <button class="nav-item" onclick="showPage('settings')">
+          <span class="nav-item-icon">⚙️</span> Configurações
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="admin-info">
+          <div class="admin-avatar" id="adminAvatarSide">A</div>
+          <div>
+            <div class="admin-name" id="adminNameSide">Admin</div>
+            <div class="admin-role" id="adminRoleSide">Proprietário</div>
+          </div>
+        </div>
+        <button class="nav-item" onclick="adminLogout()" style="margin-top:4px;color:var(--danger)">
+          <span class="nav-item-icon">🚪</span> Sair
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="admin-main">
+      <div class="topbar">
+        <div style="display:flex;align-items:center;gap:14px">
+          <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+          <span class="topbar-title" id="pageTitle">Dashboard</span>
+        </div>
+        <div class="topbar-actions">
+          <button class="icon-btn" onclick="toggleTheme()" title="Tema">☀</button>
+          <button class="icon-btn" onclick="toggleNotif()" title="Notificações">🔔</button>
+          <button class="icon-btn" onclick="showPage('appointments')" title="Novo agendamento">+</button>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <!-- ── DASHBOARD ── -->
+        <div class="page active" id="dashboardPage">
+          <div class="metrics-grid">
+            <div class="metric-card" style="--m-color:var(--gold)">
+              <div class="metric-label">Hoje</div>
+              <div class="metric-value" id="mToday">0</div>
+              <div class="metric-sub">agendamentos hoje</div>
+              <div class="metric-icon">📅</div>
+            </div>
+            <div class="metric-card" style="--m-color:var(--warning)">
+              <div class="metric-label">Pendentes</div>
+              <div class="metric-value" id="mPending">0</div>
+              <div class="metric-sub">aguardando confirmação</div>
+              <div class="metric-icon">⏳</div>
+            </div>
+            <div class="metric-card" style="--m-color:var(--success)">
+              <div class="metric-label">Clientes</div>
+              <div class="metric-value" id="mClients">0</div>
+              <div class="metric-sub">cadastrados</div>
+              <div class="metric-icon">👥</div>
+            </div>
+            <div class="metric-card" style="--m-color:var(--info)">
+              <div class="metric-label">Faturamento Hoje</div>
+              <div class="metric-value" id="mRevenue">R$ 0</div>
+              <div class="metric-sub">serviços concluídos</div>
+              <div class="metric-icon">💰</div>
+            </div>
+          </div>
+          <div class="dashboard-grid">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">⏰ Próximos Agendamentos</div>
+                <button class="icon-btn" onclick="showPage('appointments')" style="font-size:12px;width:auto;padding:0 10px">Ver todos</button>
+              </div>
+              <div class="card-body" id="dashNextAppts"></div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">📊 Serviços Populares</div>
+              </div>
+              <div class="card-body" id="dashPopServices"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── APPOINTMENTS ── -->
+        <div class="page" id="appointmentsPage">
+          <div class="search-bar">
+            <input class="search-input" id="apptSearch" placeholder="🔍 Buscar por nome, serviço ou data..." oninput="renderAppointments()">
+            <select class="search-input" id="apptFilter" style="max-width:160px;appearance:none" onchange="renderAppointments()">
+              <option value="">Todos</option>
+              <option value="pending">Pendentes</option>
+              <option value="confirmed">Confirmados</option>
+              <option value="done">Concluídos</option>
+              <option value="cancelled">Cancelados</option>
+            </select>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📋 Todos os Agendamentos</div>
+              <button class="btn-primary" onclick="openModal('newAppt')" style="width:auto;padding:8px 16px;font-size:13px;margin-top:0">+ Novo</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Serviço</th>
+                    <th>Data/Hora</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="apptTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── CALENDAR ── -->
+        <div class="page" id="calendarPage">
+          <div class="cal-page-grid">
+            <div class="big-calendar">
+              <div class="big-cal-nav">
+                <button class="icon-btn" onclick="adminChangeMonth(-1)">‹</button>
+                <span style="font-size:15px;font-weight:600" id="adminCalLabel"></span>
+                <button class="icon-btn" onclick="adminChangeMonth(1)">›</button>
+              </div>
+              <div class="big-cal-grid" id="adminCalGrid"></div>
+            </div>
+            <div class="day-appointments">
+              <div style="font-size:15px;font-weight:600;margin-bottom:16px" id="selectedDayTitle">Selecione um dia</div>
+              <div id="dayApptList"><p style="color:var(--text3);font-size:14px">Clique em um dia para ver os agendamentos.</p></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── CLIENTS ── -->
+        <div class="page" id="clientsPage">
+          <div class="search-bar">
+            <input class="search-input" id="clientSearch" placeholder="🔍 Buscar cliente..." oninput="renderClients()">
+          </div>
+          <div id="clientList"></div>
+        </div>
+
+        <!-- ── SERVICES ── -->
+        <div class="page" id="servicesPage">
+          <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+            <button class="btn-primary" onclick="openModal('newSvc')" style="width:auto;padding:10px 20px;font-size:14px">+ Novo Serviço</button>
+          </div>
+          <div class="services-admin-grid" id="servicesAdminGrid"></div>
+        </div>
+
+        <!-- ── HISTORY ── -->
+        <div class="page" id="historyPage">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📋 Histórico de Atendimentos</div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Serviço</th>
+                    <th>Data</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="historyBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SETTINGS ── -->
+        <div class="page" id="settingsPage">
+          <div class="settings-section">
+            <div class="settings-title">🏪 Dados da Empresa</div>
+            <div id="settingsBizInfo"></div>
+          </div>
+          <div class="settings-section">
+            <div class="settings-title">⚙️ Preferências</div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Notificações WhatsApp</div>
+                <div class="setting-desc">Enviar confirmação automática ao cliente</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')" id="wppToggle"></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Lembrete 1 hora antes</div>
+                <div class="setting-desc">Notificar cliente 60 min antes do horário</div>
+              </div>
+              <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Agendamento automático</div>
+                <div class="setting-desc">Confirmar agendamentos automaticamente</div>
+              </div>
+              <div class="toggle" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+          <div class="settings-section">
+            <div class="settings-title">🎨 Aparência</div>
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="setting-label">Tema Escuro</div>
+                <div class="setting-desc">Interface no tema escuro</div>
+              </div>
+              <div class="toggle on" id="themeToggleSetting" onclick="toggleTheme()"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- NOTIFICATION PANEL -->
+  <div class="notif-panel" id="notifPanel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-size:16px;font-weight:600">🔔 Notificações</div>
+      <button class="icon-btn" onclick="toggleNotif()" style="font-size:14px">✕</button>
+    </div>
+    <div id="notifList"></div>
+  </div>
+</div>
+
+<!-- NEW APPOINTMENT MODAL -->
+<div class="modal-overlay" id="newApptModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">+ Novo Agendamento</div>
+      <button class="modal-close" onclick="closeModal('newAppt')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nome do Cliente</label>
+        <input class="form-input" id="naName" placeholder="Nome completo">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">WhatsApp</label>
+          <input class="form-input" id="naPhone" placeholder="(11) 99999-9999">
+        </div>
+        <div class="form-group">
+          <label class="form-label">E-mail</label>
+          <input class="form-input" id="naEmail" type="email" placeholder="cliente@email.com">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Serviço</label>
+        <select class="form-input" id="naService" style="appearance:none">
+          <option value="">Selecionar serviço</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Data</label>
+          <input class="form-input" type="date" id="naDate">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Horário</label>
+          <select class="form-input" id="naTime" style="appearance:none">
+            <option value="">Selecionar</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Observações</label>
+        <input class="form-input" id="naNotes" placeholder="Obs. do cliente ou profissional">
+      </div>
+      <button class="btn-primary" onclick="addManualAppointment()">✓ Criar Agendamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW SERVICE MODAL -->
+<div class="modal-overlay" id="newSvcModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">+ Novo Serviço</div>
+      <button class="modal-close" onclick="closeModal('newSvc')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Ícone</label>
+          <input class="form-input" id="nsIcon" placeholder="Ex: ✂ 💈 🪒" maxlength="4">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nome</label>
+          <input class="form-input" id="nsName" placeholder="Nome do serviço">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descrição</label>
+        <input class="form-input" id="nsDesc" placeholder="Breve descrição">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Preço (R$)</label>
+          <input class="form-input" type="number" id="nsPrice" placeholder="50">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Duração (min)</label>
+          <input class="form-input" type="number" id="nsDur" placeholder="45">
+        </div>
+      </div>
+      <button class="btn-primary" onclick="addService()">+ Adicionar Serviço</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const HOURS = ['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30',
+               '13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30'];
+
+const DEFAULT_SERVICES = [
+  {name:'Corte Masculino', desc:'Tesoura ou máquina com acabamento', price:45, dur:45, icon:'✂'},
+  {name:'Barba Completa', desc:'Navalha, toalha quente e hidratação', price:35, dur:30, icon:'🪒'},
+  {name:'Corte + Barba', desc:'Combo completo cabelo e barba', price:70, dur:70, icon:'💈'},
+  {name:'Progressiva', desc:'Alisamento com escova e produto premium', price:120, dur:120, icon:'💁'},
+  {name:'Coloração', desc:'Pintura completa com finalização', price:90, dur:90, icon:'🎨'},
+  {name:'Hidratação', desc:'Tratamento profundo com máscara', price:60, dur:60, icon:'✨'},
+];
+
+let adminState = {
+  theme: 'dark',
+  admin: null,
+  adminServices: [], // carregado do Firestore (coleção 'servicos', compartilhada com o site do cliente)
+  bookings: [],       // carregado em tempo real do Firestore (coleção 'agendamentos')
+  calYear: new Date().getFullYear(),
+  calMonth: new Date().getMonth(),
+  selectedCalDay: null,
+};
+
+// ── FIRESTORE: DADOS ──────────────────────────────────────────────────────────
+async function carregarAdminServicos(){
+  const snap = await db.collection('servicos').where('ativo','==',true).get();
+  if(snap.empty){
+    const batch = db.batch();
+    DEFAULT_SERVICES.forEach(s=>{
+      const ref = db.collection('servicos').doc();
+      batch.set(ref, {...s, ativo:true, ordem: DEFAULT_SERVICES.indexOf(s)});
+    });
+    await batch.commit();
+    return carregarAdminServicos();
+  }
+  adminState.adminServices = snap.docs
+    .map(d=>({id:d.id, ...d.data()}))
+    .sort((a,b)=>(a.ordem??0)-(b.ordem??0));
+}
+let unsubscribeAgendamentos = null;
+function ouvirAgendamentosAdmin(){
+  if(unsubscribeAgendamentos) unsubscribeAgendamentos();
+  unsubscribeAgendamentos = db.collection('agendamentos').onSnapshot(snap=>{
+    adminState.bookings = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    renderDashboard();
+    renderAppointments();
+    renderAdminCalendar();
+    renderClients();
+    renderHistory();
+    updatePendingBadge();
+    renderNotifications();
+  });
+}
+
+// ── THEME ─────────────────────────────────────────────────────────────────────
+function toggleTheme(){
+  adminState.theme = adminState.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', adminState.theme);
+  document.querySelector('.icon-btn[onclick="toggleTheme()"]').textContent = adminState.theme === 'dark' ? '☀' : '🌙';
+  const ts = document.getElementById('themeToggleSetting');
+  if(ts) ts.classList.toggle('on', adminState.theme === 'dark');
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function toast(msg, type='info'){
+  const icons = {success:'✅', error:'❌', info:'ℹ️'};
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span style="font-size:18px">${icons[type]}</span>${msg}`;
+  document.getElementById('toastContainer').appendChild(t);
+  setTimeout(()=> t.remove(), 4000);
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+function openModal(id){ document.getElementById(id+'Modal').classList.add('active'); }
+function closeModal(id){ document.getElementById(id+'Modal').classList.remove('active'); }
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+function switchAuthTab(tab){
+  document.getElementById('atLogin').classList.toggle('active', tab==='login');
+  document.getElementById('atRegister').classList.toggle('active', tab==='register');
+  document.getElementById('aLoginForm').style.display = tab==='login' ? 'block' : 'none';
+  document.getElementById('aRegisterForm').style.display = tab==='register' ? 'block' : 'none';
+}
+async function adminLogin(){
+  const email = document.getElementById('aLoginEmail').value.trim();
+  const pass = document.getElementById('aLoginPass').value;
+  if(!email||!pass) return toast('Preencha e-mail e senha', 'error');
+  try{
+    const cred = await auth.signInWithEmailAndPassword(email, pass);
+    const doc = await db.collection('admins').doc(cred.user.uid).get();
+    if(!doc.exists){
+      await auth.signOut();
+      return toast('Esta conta não é de um administrador.', 'error');
+    }
+    adminState.admin = {uid: cred.user.uid, ...doc.data()};
+    initAdminApp();
+  }catch(e){
+    toast('Credenciais inválidas', 'error');
+  }
+}
+async function adminRegister(){
+  const name = document.getElementById('aRegName').value.trim();
+  const email = document.getElementById('aRegEmail').value.trim();
+  const biz = document.getElementById('aRegBiz').value.trim();
+  const type = document.getElementById('aRegType').value;
+  const phone = document.getElementById('aRegWpp').value.trim();
+  const city = document.getElementById('aRegCity').value.trim();
+  const addr = document.getElementById('aRegAddr').value.trim();
+  const pass = document.getElementById('aRegPass').value;
+  const pass2 = document.getElementById('aRegPass2').value;
+  const cpf = document.getElementById('aRegCpf').value.trim();
+  const cnpj = document.getElementById('aRegCnpj').value.trim();
+  if(!name||!email||!biz||!phone||!pass) return toast('Preencha os campos obrigatórios', 'error');
+  if(pass !== pass2) return toast('As senhas não coincidem', 'error');
+  if(pass.length < 6) return toast('A senha precisa ter pelo menos 6 caracteres', 'error');
+  try{
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    const admin = {
+      name, email, bizName: biz, bizType: type,
+      phone: phone.replace(/\D/g,''), city, addr, cpf, cnpj,
+      createdAt: new Date().toISOString()
+    };
+    await db.collection('admins').doc(cred.user.uid).set(admin);
+    await db.collection('config').doc('geral').set({adminPhone: admin.phone}, {merge:true});
+    adminState.admin = {uid: cred.user.uid, ...admin};
+    toast(`Empresa "${biz}" cadastrada com sucesso! 🎉`, 'success');
+    setTimeout(initAdminApp, 800);
+  }catch(e){
+    if(e.code === 'auth/email-already-in-use') toast('E-mail já cadastrado', 'error');
+    else toast('Não foi possível criar a conta: ' + e.message, 'error');
+  }
+}
+function adminLogout(){
+  auth.signOut();
+  if(unsubscribeAgendamentos) unsubscribeAgendamentos();
+  adminState.admin = null;
+  document.getElementById('adminApp').style.display = 'none';
+  document.getElementById('authScreen').style.display = 'flex';
+  toast('Sessão encerrada', 'info');
+}
+async function initAdminApp(){
+  const a = adminState.admin;
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('adminApp').style.display = 'block';
+  document.getElementById('bizNameTag').textContent = a.bizName || 'Empresa';
+  document.getElementById('adminAvatarSide').textContent = (a.name||'A').charAt(0).toUpperCase();
+  document.getElementById('adminNameSide').textContent = a.name || 'Admin';
+  document.getElementById('adminRoleSide').textContent = a.bizName || 'Proprietário';
+  await carregarAdminServicos();
+  renderAdminServices();
+  renderSettings();
+  ouvirAgendamentosAdmin(); // dispara render dos agendamentos/dashboard/histórico em tempo real
+}
+
+// ── SIDEBAR ───────────────────────────────────────────────────────────────────
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('visible');
+}
+
+// ── PAGES ─────────────────────────────────────────────────────────────────────
+const pageTitles = {
+  dashboard:'📊 Dashboard', appointments:'📅 Agendamentos',
+  calendar:'🗓 Calendário', clients:'👥 Clientes',
+  services:'✂ Serviços', history:'📋 Histórico', settings:'⚙️ Configurações'
+};
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id+'Page').classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const items = document.querySelectorAll('.nav-item');
+  const map = ['dashboard','appointments','calendar','clients','services','history','settings'];
+  const idx = map.indexOf(id);
+  if(idx>=0) items[idx].classList.add('active');
+  document.getElementById('pageTitle').textContent = pageTitles[id] || id;
+  if(id==='calendar') renderAdminCalendar();
+  // Close mobile sidebar
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('visible');
+}
+
+// ── NOTIFICATIONS ─────────────────────────────────────────────────────────────
+let notifOpen = false;
+function toggleNotif(){
+  notifOpen = !notifOpen;
+  document.getElementById('notifPanel').classList.toggle('open', notifOpen);
+}
+function renderNotifications(){
+  const pending = adminState.bookings.filter(b=>b.status==='pending');
+  if(!pending.length){
+    document.getElementById('notifList').innerHTML = '<p style="color:var(--text3);font-size:14px">Nenhuma notificação.</p>';
+    return;
+  }
+  document.getElementById('notifList').innerHTML = pending.map(b=>`
+    <div class="notif-item">
+      <div class="notif-title">📅 Novo agendamento: ${b.name}</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:4px">${b.service} • ${b.date} às ${b.time}</div>
+      <div class="notif-time">R$ ${b.price} • Aguardando confirmação</div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="status-btn confirm" onclick="updateStatus('${b.id}','confirmed');renderNotifications()">✓ Confirmar</button>
+        <button class="status-btn cancel" onclick="updateStatus('${b.id}','cancelled');renderNotifications()">✕ Cancelar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function renderDashboard(){
+  const today = new Date().toISOString().slice(0,10);
+  const todayAppts = adminState.bookings.filter(b=>b.date===today);
+  const pending = adminState.bookings.filter(b=>b.status==='pending');
+  const uniqueClients = [...new Set(adminState.bookings.map(b=>b.email||b.phone))];
+  const revenue = todayAppts.filter(b=>b.status==='done').reduce((a,b)=>a+b.price,0);
+  document.getElementById('mToday').textContent = todayAppts.length;
+  document.getElementById('mPending').textContent = pending.length;
+  document.getElementById('mClients').textContent = uniqueClients.length;
+  document.getElementById('mRevenue').textContent = `R$ ${revenue}`;
+
+  // Next appointments
+  const upcoming = adminState.bookings
+    .filter(b=>b.status!=='cancelled'&&b.status!=='done')
+    .sort((a,b)=>new Date(a.date+'T'+a.time)-new Date(b.date+'T'+b.time))
+    .slice(0,4);
+  document.getElementById('dashNextAppts').innerHTML = upcoming.length ? upcoming.map(b=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="text-align:center;min-width:50px">
+        <div style="font-size:13px;font-weight:700;color:var(--gold)">${b.time}</div>
+        <div style="font-size:10px;color:var(--text3)">${b.date?.slice(5)}</div>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:600">${b.name}</div>
+        <div style="font-size:12px;color:var(--text2)">${b.service}</div>
+      </div>
+      <span class="badge ${b.status||'pending'}">${b.status==='confirmed'?'✅':'⏳'}</span>
+    </div>
+  `).join('') : '<p style="color:var(--text3);font-size:14px;padding:10px 0">Nenhum próximo agendamento.</p>';
+
+  // Popular services
+  const svcCount = {};
+  adminState.bookings.forEach(b=>{ svcCount[b.service] = (svcCount[b.service]||0)+1; });
+  const sorted = Object.entries(svcCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const max = sorted[0]?.[1] || 1;
+  document.getElementById('dashPopServices').innerHTML = sorted.length ? sorted.map(([svc,cnt])=>`
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:13px">
+        <span>${svc}</span><strong>${cnt}</strong>
+      </div>
+      <div style="height:6px;border-radius:3px;background:var(--bg3);overflow:hidden">
+        <div style="height:100%;width:${(cnt/max)*100}%;background:var(--gold);border-radius:3px"></div>
+      </div>
+    </div>
+  `).join('') : '<p style="color:var(--text3);font-size:14px">Nenhum dado disponível.</p>';
+}
+
+// ── APPOINTMENTS ──────────────────────────────────────────────────────────────
+function updatePendingBadge(){
+  const cnt = adminState.bookings.filter(b=>b.status==='pending').length;
+  const badge = document.getElementById('pendingBadge');
+  badge.textContent = cnt;
+  badge.style.display = cnt ? 'inline-flex' : 'none';
+}
+async function updateStatus(id, status){
+  const b = adminState.bookings.find(b=>b.id===id);
+  if(!b) return;
+  try{
+    await db.collection('agendamentos').doc(id).update({status});
+  }catch(e){
+    return toast('Erro ao atualizar: ' + e.message, 'error');
+  }
+  const msgs = {confirmed:'✅ Agendamento confirmado!', done:'✔ Marcado como concluído', cancelled:'❌ Agendamento cancelado', pending:'⏳ Marcado como pendente'};
+  toast(msgs[status]||'Atualizado', status==='confirmed'?'success':status==='done'?'info':'error');
+  // o listener em tempo real (onSnapshot) já re-renderiza tudo automaticamente
+  // WhatsApp reminder
+  if(status==='confirmed'&&b.phone){
+    const phone = b.phone.replace(/\D/g,'');
+    const msg = encodeURIComponent(`Olá ${b.name}! Seu agendamento de *${b.service}* para ${b.date} às ${b.time} foi *CONFIRMADO*. Aguardamos você! ✂💈`);
+    const link = `https://wa.me/55${phone}?text=${msg}`;
+    toast(`<a href="${link}" target="_blank" style="color:var(--success)">📱 Clique para notificar o cliente no WhatsApp</a>`, 'success');
+  }
+}
+function renderAppointments(){
+  const query = (document.getElementById('apptSearch')?.value||'').toLowerCase();
+  const filter = document.getElementById('apptFilter')?.value||'';
+  let list = adminState.bookings.filter(b=>{
+    const match = !query || b.name?.toLowerCase().includes(query) || b.service?.toLowerCase().includes(query) || b.date?.includes(query);
+    const st = !filter || b.status===filter;
+    return match && st;
+  }).sort((a,b)=>new Date(b.date+'T'+b.time)-new Date(a.date+'T'+a.time));
+  
+  const statusLabel = {pending:'⏳ Pendente', confirmed:'✅ Confirmado', done:'✔ Concluído', cancelled:'❌ Cancelado'};
+  document.getElementById('apptTableBody').innerHTML = list.length ? list.map(b=>`
+    <tr>
+      <td>
+        <div style="font-weight:600;font-size:14px">${b.name}</div>
+        <div style="font-size:11px;color:var(--text3)">${b.phone||b.email||'—'}</div>
+      </td>
+      <td>${b.service}</td>
+      <td>
+        <div style="font-size:14px;font-weight:500">${b.date}</div>
+        <div style="font-size:12px;color:var(--gold)">${b.time}</div>
+      </td>
+      <td style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--gold)">R$ ${b.price}</td>
+      <td><span class="badge ${b.status||'pending'}">${statusLabel[b.status]||'⏳ Pendente'}</span></td>
+      <td>
+        <div class="status-btns">
+          <button class="status-btn confirm" onclick="updateStatus('${b.id}','confirmed')">✓</button>
+          <button class="status-btn done" onclick="updateStatus('${b.id}','done')">✔ Feito</button>
+          <button class="status-btn pending" onclick="updateStatus('${b.id}','pending')">↩</button>
+          <button class="status-btn cancel" onclick="updateStatus('${b.id}','cancelled')">✕</button>
+          ${b.phone?`<a href="https://wa.me/55${b.phone.replace(/\D/g,'')}?text=${encodeURIComponent('Olá '+b.name+'!')}" target="_blank" style="text-decoration:none"><button class="status-btn" style="background:rgba(37,211,102,.1);color:#25D366">📱</button></a>`:''}
+        </div>
+      </td>
+    </tr>
+  `).join('') : `<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:30px">Nenhum agendamento encontrado.</td></tr>`;
+}
+
+// ── CALENDAR ──────────────────────────────────────────────────────────────────
+function renderAdminCalendar(){
+  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                  'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  document.getElementById('adminCalLabel').textContent = `${months[adminState.calMonth]} ${adminState.calYear}`;
+  const first = new Date(adminState.calYear, adminState.calMonth, 1).getDay();
+  const days = new Date(adminState.calYear, adminState.calMonth+1, 0).getDate();
+  const now = new Date();
+  const ds = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  let html = ds.map(d=>`<div class="big-cal-header">${d}</div>`).join('');
+  for(let i=0;i<first;i++) html+=`<div class="big-cal-day empty"></div>`;
+  for(let d=1;d<=days;d++){
+    const dateStr = `${adminState.calYear}-${String(adminState.calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const today = now.toISOString().slice(0,10);
+    const hasAppt = adminState.bookings.some(b=>b.date===dateStr&&b.status!=='cancelled');
+    const isSelected = dateStr===adminState.selectedCalDay;
+    let cls='big-cal-day';
+    if(isSelected) cls+=' selected';
+    else if(dateStr===today) cls+=' today';
+    if(hasAppt) cls+=' has-appt';
+    html+=`<div class="${cls}" onclick="selectAdminDay('${dateStr}')">${d}</div>`;
+  }
+  document.getElementById('adminCalGrid').innerHTML = html;
+}
+function adminChangeMonth(dir){
+  adminState.calMonth+=dir;
+  if(adminState.calMonth>11){adminState.calMonth=0;adminState.calYear++;}
+  if(adminState.calMonth<0){adminState.calMonth=11;adminState.calYear--;}
+  renderAdminCalendar();
+}
+function selectAdminDay(dateStr){
+  adminState.selectedCalDay = dateStr;
+  renderAdminCalendar();
+  const dayAppts = adminState.bookings.filter(b=>b.date===dateStr&&b.status!=='cancelled')
+    .sort((a,b)=>a.time.localeCompare(b.time));
+  const dateFormatted = new Date(dateStr+'T12:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
+  document.getElementById('selectedDayTitle').textContent = dateFormatted.charAt(0).toUpperCase()+dateFormatted.slice(1);
+  document.getElementById('dayApptList').innerHTML = dayAppts.length ? dayAppts.map(b=>`
+    <div class="appt-item">
+      <div class="appt-time-badge">🕐 ${b.time}</div>
+      <div class="appt-client">${b.name}</div>
+      <div class="appt-detail">${b.service} • R$ ${b.price} • ${b.dur||45}min</div>
+      ${b.phone?`<div class="appt-detail">📱 ${b.phone}</div>`:''}
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <span class="badge ${b.status||'pending'}">${b.status==='confirmed'?'✅ Confirmado':b.status==='done'?'✔ Concluído':'⏳ Pendente'}</span>
+        ${b.status!=='confirmed'?`<button class="status-btn confirm" style="font-size:11px" onclick="updateStatus('${b.id}','confirmed');selectAdminDay('${dateStr}')">Confirmar</button>`:''}
+        ${b.status!=='done'?`<button class="status-btn done" style="font-size:11px" onclick="updateStatus('${b.id}','done');selectAdminDay('${dateStr}')">Concluído</button>`:''}
+      </div>
+    </div>
+  `).join('') : `<p style="color:var(--text3);font-size:14px">Nenhum agendamento para esse dia.</p>`;
+}
+
+// ── CLIENTS ───────────────────────────────────────────────────────────────────
+function renderClients(){
+  const q = (document.getElementById('clientSearch')?.value||'').toLowerCase();
+  const map = {};
+  adminState.bookings.forEach(b=>{
+    const key = b.email||b.phone||b.name;
+    if(!map[key]) map[key]={name:b.name,email:b.email,phone:b.phone,count:0};
+    map[key].count++;
+  });
+  let clients = Object.values(map).filter(c=>!q||c.name?.toLowerCase().includes(q)||c.email?.toLowerCase().includes(q));
+  document.getElementById('clientList').innerHTML = clients.length ? clients.map(c=>`
+    <div class="client-card">
+      <div class="client-avatar">${(c.name||'?').charAt(0).toUpperCase()}</div>
+      <div class="client-info" style="flex:1">
+        <div class="client-name">${c.name||'—'}</div>
+        ${c.email?`<div class="client-email">✉ ${c.email}</div>`:''}
+        ${c.phone?`<div class="client-phone">📱 ${c.phone}</div>`:''}
+      </div>
+      <div class="client-count">
+        <div class="cnt">${c.count}</div>
+        <div class="cnt-label">visitas</div>
+      </div>
+      ${c.phone?`<a href="https://wa.me/55${c.phone.replace(/\D/g,'')}" target="_blank" class="wpp-btn-sm">📱 WPP</a>`:''}
+    </div>
+  `).join('') : '<p style="color:var(--text3);font-size:14px;text-align:center;padding:40px">Nenhum cliente encontrado.</p>';
+}
+
+// ── SERVICES ──────────────────────────────────────────────────────────────────
+function renderAdminServices(){
+  const sel = document.getElementById('naService');
+  if(sel){
+    sel.innerHTML = '<option value="">Selecionar serviço</option>' +
+      adminState.adminServices.map(s=>`<option value="${s.id}">${s.icon} ${s.name} — R$ ${s.price}</option>`).join(''); // value já é string (id do Firestore)
+  }
+  document.getElementById('servicesAdminGrid').innerHTML = adminState.adminServices.map(s=>`
+    <div class="svc-card">
+      <div class="svc-card-icon">${s.icon}</div>
+      <div class="svc-card-name">${s.name}</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px">${s.desc}</div>
+      <div class="svc-card-price">R$ ${s.price}</div>
+      <div class="svc-card-dur">⏱ ${s.dur} minutos</div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="status-btn cancel" onclick="removeService('${s.id}')" style="font-size:11px">🗑 Remover</button>
+      </div>
+    </div>
+  `).join('');
+}
+async function addService(){
+  const icon = document.getElementById('nsIcon').value.trim()||'✂';
+  const name = document.getElementById('nsName').value.trim();
+  const desc = document.getElementById('nsDesc').value.trim();
+  const price = parseFloat(document.getElementById('nsPrice').value)||0;
+  const dur = parseInt(document.getElementById('nsDur').value)||45;
+  if(!name||!price) return toast('Preencha nome e preço', 'error');
+  try{
+    await db.collection('servicos').add({
+      icon, name, desc, price, dur, ativo:true, ordem: adminState.adminServices.length
+    });
+    await carregarAdminServicos();
+    closeModal('newSvc');
+    renderAdminServices();
+    toast(`Serviço "${name}" adicionado!`, 'success');
+  }catch(e){
+    toast('Erro ao adicionar serviço: ' + e.message, 'error');
+  }
+}
+async function removeService(id){
+  if(!confirm('Remover este serviço?')) return;
+  try{
+    // soft delete: marca inativo para não sumir de agendamentos já feitos
+    await db.collection('servicos').doc(id).update({ativo:false});
+    adminState.adminServices = adminState.adminServices.filter(s=>s.id!==id);
+    renderAdminServices();
+    toast('Serviço removido', 'info');
+  }catch(e){
+    toast('Erro ao remover serviço: ' + e.message, 'error');
+  }
+}
+
+// ── HISTORY ───────────────────────────────────────────────────────────────────
+function renderHistory(){
+  const statusLabel = {pending:'⏳ Pendente', confirmed:'✅ Confirmado', done:'✔ Concluído', cancelled:'❌ Cancelado'};
+  const all = [...adminState.bookings].sort((a,b)=>new Date(b.date+'T'+b.time)-new Date(a.date+'T'+a.time));
+  document.getElementById('historyBody').innerHTML = all.length ? all.map(b=>`
+    <tr>
+      <td><div style="font-weight:600">${b.name}</div><div style="font-size:11px;color:var(--text3)">${b.email||''}</div></td>
+      <td>${b.service}</td>
+      <td>${b.date} ${b.time}</td>
+      <td style="font-family:'Playfair Display',serif;font-weight:700;color:var(--gold)">R$ ${b.price}</td>
+      <td><span class="badge ${b.status||'pending'}">${statusLabel[b.status]||'⏳'}</span></td>
+    </tr>
+  `).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px">Nenhum histórico disponível.</td></tr>`;
+}
+
+// ── MANUAL APPOINTMENT ────────────────────────────────────────────────────────
+function populateTimes(){
+  const dateVal = document.getElementById('naDate').value;
+  const taken = adminState.bookings.filter(b=>b.date===dateVal&&b.status!=='cancelled').map(b=>b.time);
+  const sel = document.getElementById('naTime');
+  sel.innerHTML = '<option value="">Selecionar horário</option>'+
+    HOURS.map(h=>`<option value="${h}" ${taken.includes(h)?'disabled':''} ${taken.includes(h)?'style="color:var(--danger)"':''}>${h} ${taken.includes(h)?'(ocupado)':''}</option>`).join('');
+}
+document.getElementById('naDate').addEventListener('change', populateTimes);
+async function addManualAppointment(){
+  const name = document.getElementById('naName').value.trim();
+  const phone = document.getElementById('naPhone').value.trim();
+  const email = document.getElementById('naEmail').value.trim();
+  const svcId = document.getElementById('naService').value;
+  const date = document.getElementById('naDate').value;
+  const time = document.getElementById('naTime').value;
+  const notes = document.getElementById('naNotes').value.trim();
+  if(!name||!svcId||!date||!time) return toast('Preencha os campos obrigatórios', 'error');
+  const svc = adminState.adminServices.find(s=>s.id===svcId);
+  if(!svc) return toast('Serviço inválido', 'error');
+  const booking = {
+    name, phone, email, notes,
+    service:svc.name, serviceId:svcId,
+    price:svc.price, dur:svc.dur, duration:svc.dur,
+    date, time, status:'confirmed',
+    createdAt:new Date().toISOString()
+  };
+  try{
+    await db.collection('agendamentos').add(booking);
+    closeModal('newAppt');
+    // o listener em tempo real já atualiza os painéis
+    toast(`Agendamento de ${name} criado!`, 'success');
+  }catch(e){
+    toast('Erro ao criar agendamento: ' + e.message, 'error');
+  }
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
+function renderSettings(){
+  const a = adminState.admin;
+  if(!a) return;
+  document.getElementById('settingsBizInfo').innerHTML = `
+    <div class="setting-row">
+      <div class="setting-info"><div class="setting-label">Nome da Empresa</div></div>
+      <strong>${a.bizName||'—'}</strong>
+    </div>
+    <div class="setting-row">
+      <div class="setting-info"><div class="setting-label">Proprietário</div></div>
+      <strong>${a.name||'—'}</strong>
+    </div>
+    <div class="setting-row">
+      <div class="setting-info"><div class="setting-label">E-mail</div></div>
+      <strong>${a.email||'—'}</strong>
+    </div>
+    <div class="setting-row">
+      <div class="setting-info"><div class="setting-label">WhatsApp</div></div>
+      <strong>${a.phone||'—'}</strong>
+    </div>
+    <div class="setting-row">
+      <div class="setting-info"><div class="setting-label">Cidade</div></div>
+      <strong>${a.city||'—'}</strong>
+    </div>
+    <div class="setting-row">
+      <div class="setting-info"><div class="setting-label">Tipo de Negócio</div></div>
+      <strong style="text-transform:capitalize">${a.bizType||'—'}</strong>
+    </div>
+  `;
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+// Mantém a sessão do admin entre visitas (Firebase Auth cuida da persistência)
+auth.onAuthStateChanged(async (fbUser)=>{
+  if(fbUser && !adminState.admin){
+    const doc = await db.collection('admins').doc(fbUser.uid).get();
+    if(doc.exists){
+      adminState.admin = {uid: fbUser.uid, ...doc.data()};
+      initAdminApp();
+    }
+  }
+});
+</script>
+</body>
+</html>
