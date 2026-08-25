@@ -772,10 +772,6 @@ async function carregarServicos(){
     SERVICES = [];
   }
 }
-  SERVICES = snap.docs
-    .map(d=>({id:d.id, ...d.data()}))
-    .sort((a,b)=>(a.ordem??0)-(b.ordem??0));
-}
 async function carregarConfig(){
   try{
     const doc = await db.collection('config').doc('geral').get();
