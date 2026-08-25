@@ -1021,6 +1021,7 @@ function nextStep(n){
   if(n===4){
     const name = document.getElementById('bkName').value.trim();
     const phone = document.getElementById('bkPhone').value.trim();
+    if(!state.selectedDate||!state.selectedTime) return toast('Selecione data e horário', 'error');
     if(!name||!phone) return toast('Preencha nome e WhatsApp', 'error');
     renderSummary();
   }
