@@ -1079,6 +1079,22 @@ async function confirmBooking(){
   const notes = document.getElementById('bkNotes').value.trim();
   const s = state.selectedService;
 
+  // Validação de formato: nome com pelo menos 2 caracteres, e-mail no formato
+  // correto, telefone com DDD + número (10 ou 11 dígitos, padrão brasileiro).
+  if(name.length < 2){
+    toast('Digite seu nome completo.', 'error');
+    return;
+  }
+  const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if(!emailValido){
+    toast('Digite um e-mail válido.', 'error');
+    return;
+  }
+  if(phone.length < 10 || phone.length > 11){
+    toast('Digite um telefone válido com DDD (ex: 91999999999).', 'error');
+    return;
+  }
+
   // trava de segurança: reconfirma que o horário ainda está livre antes de gravar
   const conflito = state.bookings.some(b =>
     b.date === state.selectedDate && b.time === state.selectedTime && b.status !== 'cancelled');
