@@ -756,7 +756,8 @@ let state = {
   calYear: new Date().getFullYear(),
   calMonth: new Date().getMonth(),
   currentStep: 1,
-  bookings: [], // carregado do Firestore
+  bookings: [], // espelho público (só data/hora/status) pra ver horários ocupados
+  myBookings: [], // agendamentos do próprio cliente logado, com detalhes completos
   adminPhone: '5511999999999',
 };
 
@@ -778,13 +779,32 @@ async function carregarConfig(){
     if(doc.exists && doc.data().adminPhone) state.adminPhone = doc.data().adminPhone;
   }catch(e){ /* usa padrão */ }
 }
+function esc(str){
+  if(str===null||str===undefined) return '';
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+let unsubscribeMinhaAgenda = null;
 function ouvirAgendamentos(){
-  // tempo real: qualquer novo agendamento atualiza os horários disponíveis na hora
-  db.collection('agendamentos').onSnapshot(snap=>{
+  // Lê só a coleção pública "disponibilidade" (data/hora/status, sem dado pessoal)
+  // pra saber quais horários estão ocupados no calendário do site.
+  db.collection('disponibilidade').onSnapshot(snap=>{
     state.bookings = snap.docs.map(d=>({id:d.id, ...d.data()}));
     if(document.getElementById('timeSlots')) renderTimeSlots();
-    if(state.user) renderMyAppointments();
   });
+}
+function ouvirMeusAgendamentos(){
+  // Só busca os agendamentos do próprio cliente logado (permitido pelas regras
+  // porque clienteUid == uid autenticado). Nunca lê a coleção inteira.
+  if(unsubscribeMinhaAgenda) unsubscribeMinhaAgenda();
+  if(!state.user) { state.myBookings = []; renderMyAppointments(); return; }
+  unsubscribeMinhaAgenda = db.collection('agendamentos')
+    .where('clienteUid','==', state.user.uid)
+    .onSnapshot(snap=>{
+      state.myBookings = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      renderMyAppointments();
+    });
 }
 
 // ── THEME ─────────────────────────────────────────────────────────────────────
@@ -867,6 +887,8 @@ async function doRegister(){
 function logout(){
   auth.signOut();
   state.user = null;
+  if(unsubscribeMinhaAgenda) unsubscribeMinhaAgenda();
+  state.myBookings = [];
   document.getElementById('myAccount').style.display = 'none';
   toast('Você saiu da conta', 'info');
 }
@@ -876,12 +898,12 @@ function updateProfile(){
   document.getElementById('avatarInitial').textContent = state.user.name.charAt(0).toUpperCase();
   document.getElementById('profileName').textContent = state.user.name;
   document.getElementById('profileEmail').textContent = state.user.email;
-  renderMyAppointments();
+  ouvirMeusAgendamentos();
 }
 function renderMyAppointments(){
   const list = document.getElementById('myAppointments');
   if(!list) return;
-  const mine = state.bookings.filter(b => state.user && (b.email === state.user.email || b.clienteUid === state.user.uid));
+  const mine = state.myBookings || [];
   if(!mine.length){
     list.innerHTML = '<p style="color:var(--text3);text-align:center;padding:20px">Nenhum agendamento ainda.</p>';
     return;
@@ -891,8 +913,8 @@ function renderMyAppointments(){
   list.innerHTML = mine.map(b => `
     <div class="appointment-item">
       <div class="appointment-info">
-        <div class="appt-service">${b.service}</div>
-        <div class="appt-time">📅 ${b.date} às ${b.time} • R$ ${b.price}</div>
+        <div class="appt-service">${esc(b.service)}</div>
+        <div class="appt-time">📅 ${esc(b.date)} às ${esc(b.time)} • R$ ${b.price}</div>
       </div>
       <span class="badge ${badgeClass[b.status] || 'pending'}">${statusMap[b.status] || '⏳ Pendente'}</span>
     </div>
@@ -1084,6 +1106,9 @@ async function confirmBooking(){
   const btnConfirm = document.getElementById('btnStep4') || document.querySelector('#step4 .btn-primary');
   try{
     await db.collection('agendamentos').add(booking);
+    // Espelho público sem dados pessoais, só pra marcar o horário como ocupado no calendário.
+    await db.collection('disponibilidade').doc(`${booking.date}_${booking.time}`)
+      .set({date: booking.date, time: booking.time, status: 'pending'});
   }catch(e){
     toast('Erro ao salvar agendamento: ' + e.message, 'error');
     return;

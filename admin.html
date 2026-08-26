@@ -959,6 +959,19 @@ function toast(msg, type='info'){
 function openModal(id){ document.getElementById(id+'Modal').classList.add('active'); }
 function closeModal(id){ document.getElementById(id+'Modal').classList.remove('active'); }
 
+// ── SEGURANÇA: escapa dados vindos do cliente antes de inserir no HTML ────────
+// Nunca renderize name/email/phone/notes de agendamentos direto em innerHTML sem
+// passar por esta função — evita XSS armazenado vindo do formulário público.
+function esc(str){
+  if(str===null||str===undefined) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 function switchAuthTab(tab){
   document.getElementById('atLogin').classList.toggle('active', tab==='login');
@@ -1006,7 +1019,9 @@ async function adminRegister(){
       createdAt: new Date().toISOString()
     };
     await db.collection('admins').doc(cred.user.uid).set(admin);
-    await db.collection('config').doc('geral').set({adminPhone: admin.phone}, {merge:true});
+    // Trava o cadastro público de admin: depois desse primeiro registro,
+    // as regras do Firestore (setupJaConcluido) bloqueiam novas contas admin.
+    await db.collection('config').doc('geral').set({adminPhone: admin.phone, setupDone: true}, {merge:true});
     adminState.admin = {uid: cred.user.uid, ...admin};
     toast(`Empresa "${biz}" cadastrada com sucesso! 🎉`, 'success');
     setTimeout(initAdminApp, 800);
@@ -1078,8 +1093,8 @@ function renderNotifications(){
   }
   document.getElementById('notifList').innerHTML = pending.map(b=>`
     <div class="notif-item">
-      <div class="notif-title">📅 Novo agendamento: ${b.name}</div>
-      <div style="font-size:13px;color:var(--text2);margin-top:4px">${b.service} • ${b.date} às ${b.time}</div>
+      <div class="notif-title">📅 Novo agendamento: ${esc(b.name)}</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:4px">${esc(b.service)} • ${esc(b.date)} às ${esc(b.time)}</div>
       <div class="notif-time">R$ ${b.price} • Aguardando confirmação</div>
       <div style="display:flex;gap:8px;margin-top:10px">
         <button class="status-btn confirm" onclick="updateStatus('${b.id}','confirmed');renderNotifications()">✓ Confirmar</button>
@@ -1109,12 +1124,12 @@ function renderDashboard(){
   document.getElementById('dashNextAppts').innerHTML = upcoming.length ? upcoming.map(b=>`
     <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
       <div style="text-align:center;min-width:50px">
-        <div style="font-size:13px;font-weight:700;color:var(--gold)">${b.time}</div>
-        <div style="font-size:10px;color:var(--text3)">${b.date?.slice(5)}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--gold)">${esc(b.time)}</div>
+        <div style="font-size:10px;color:var(--text3)">${esc(b.date?.slice(5))}</div>
       </div>
       <div style="flex:1">
-        <div style="font-size:14px;font-weight:600">${b.name}</div>
-        <div style="font-size:12px;color:var(--text2)">${b.service}</div>
+        <div style="font-size:14px;font-weight:600">${esc(b.name)}</div>
+        <div style="font-size:12px;color:var(--text2)">${esc(b.service)}</div>
       </div>
       <span class="badge ${b.status||'pending'}">${b.status==='confirmed'?'✅':'⏳'}</span>
     </div>
@@ -1149,6 +1164,9 @@ async function updateStatus(id, status){
   if(!b) return;
   try{
     await db.collection('agendamentos').doc(id).update({status});
+    // mantém o espelho público (sem dados pessoais) em sincronia
+    await db.collection('disponibilidade').doc(`${b.date}_${b.time}`)
+      .set({date: b.date, time: b.time, status}, {merge:true});
   }catch(e){
     return toast('Erro ao atualizar: ' + e.message, 'error');
   }
@@ -1176,13 +1194,13 @@ function renderAppointments(){
   document.getElementById('apptTableBody').innerHTML = list.length ? list.map(b=>`
     <tr>
       <td>
-        <div style="font-weight:600;font-size:14px">${b.name}</div>
-        <div style="font-size:11px;color:var(--text3)">${b.phone||b.email||'—'}</div>
+        <div style="font-weight:600;font-size:14px">${esc(b.name)}</div>
+        <div style="font-size:11px;color:var(--text3)">${esc(b.phone||b.email||'—')}</div>
       </td>
-      <td>${b.service}</td>
+      <td>${esc(b.service)}</td>
       <td>
-        <div style="font-size:14px;font-weight:500">${b.date}</div>
-        <div style="font-size:12px;color:var(--gold)">${b.time}</div>
+        <div style="font-size:14px;font-weight:500">${esc(b.date)}</div>
+        <div style="font-size:12px;color:var(--gold)">${esc(b.time)}</div>
       </td>
       <td style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--gold)">R$ ${b.price}</td>
       <td><span class="badge ${b.status||'pending'}">${statusLabel[b.status]||'⏳ Pendente'}</span></td>
@@ -1238,10 +1256,10 @@ function selectAdminDay(dateStr){
   document.getElementById('selectedDayTitle').textContent = dateFormatted.charAt(0).toUpperCase()+dateFormatted.slice(1);
   document.getElementById('dayApptList').innerHTML = dayAppts.length ? dayAppts.map(b=>`
     <div class="appt-item">
-      <div class="appt-time-badge">🕐 ${b.time}</div>
-      <div class="appt-client">${b.name}</div>
-      <div class="appt-detail">${b.service} • R$ ${b.price} • ${b.dur||45}min</div>
-      ${b.phone?`<div class="appt-detail">📱 ${b.phone}</div>`:''}
+      <div class="appt-time-badge">🕐 ${esc(b.time)}</div>
+      <div class="appt-client">${esc(b.name)}</div>
+      <div class="appt-detail">${esc(b.service)} • R$ ${b.price} • ${b.dur||45}min</div>
+      ${b.phone?`<div class="appt-detail">📱 ${esc(b.phone)}</div>`:''}
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
         <span class="badge ${b.status||'pending'}">${b.status==='confirmed'?'✅ Confirmado':b.status==='done'?'✔ Concluído':'⏳ Pendente'}</span>
         ${b.status!=='confirmed'?`<button class="status-btn confirm" style="font-size:11px" onclick="updateStatus('${b.id}','confirmed');selectAdminDay('${dateStr}')">Confirmar</button>`:''}
@@ -1263,11 +1281,11 @@ function renderClients(){
   let clients = Object.values(map).filter(c=>!q||c.name?.toLowerCase().includes(q)||c.email?.toLowerCase().includes(q));
   document.getElementById('clientList').innerHTML = clients.length ? clients.map(c=>`
     <div class="client-card">
-      <div class="client-avatar">${(c.name||'?').charAt(0).toUpperCase()}</div>
+      <div class="client-avatar">${esc((c.name||'?').charAt(0).toUpperCase())}</div>
       <div class="client-info" style="flex:1">
-        <div class="client-name">${c.name||'—'}</div>
-        ${c.email?`<div class="client-email">✉ ${c.email}</div>`:''}
-        ${c.phone?`<div class="client-phone">📱 ${c.phone}</div>`:''}
+        <div class="client-name">${esc(c.name||'—')}</div>
+        ${c.email?`<div class="client-email">✉ ${esc(c.email)}</div>`:''}
+        ${c.phone?`<div class="client-phone">📱 ${esc(c.phone)}</div>`:''}
       </div>
       <div class="client-count">
         <div class="cnt">${c.count}</div>
@@ -1283,13 +1301,13 @@ function renderAdminServices(){
   const sel = document.getElementById('naService');
   if(sel){
     sel.innerHTML = '<option value="">Selecionar serviço</option>' +
-      adminState.adminServices.map(s=>`<option value="${s.id}">${s.icon} ${s.name} — R$ ${s.price}</option>`).join(''); // value já é string (id do Firestore)
+      adminState.adminServices.map(s=>`<option value="${s.id}">${esc(s.icon)} ${esc(s.name)} — R$ ${s.price}</option>`).join(''); // value já é string (id do Firestore)
   }
   document.getElementById('servicesAdminGrid').innerHTML = adminState.adminServices.map(s=>`
     <div class="svc-card">
-      <div class="svc-card-icon">${s.icon}</div>
-      <div class="svc-card-name">${s.name}</div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:8px">${s.desc}</div>
+      <div class="svc-card-icon">${esc(s.icon)}</div>
+      <div class="svc-card-name">${esc(s.name)}</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px">${esc(s.desc)}</div>
       <div class="svc-card-price">R$ ${s.price}</div>
       <div class="svc-card-dur">⏱ ${s.dur} minutos</div>
       <div style="display:flex;gap:8px;margin-top:12px">
@@ -1336,9 +1354,9 @@ function renderHistory(){
   const all = [...adminState.bookings].sort((a,b)=>new Date(b.date+'T'+b.time)-new Date(a.date+'T'+a.time));
   document.getElementById('historyBody').innerHTML = all.length ? all.map(b=>`
     <tr>
-      <td><div style="font-weight:600">${b.name}</div><div style="font-size:11px;color:var(--text3)">${b.email||''}</div></td>
-      <td>${b.service}</td>
-      <td>${b.date} ${b.time}</td>
+      <td><div style="font-weight:600">${esc(b.name)}</div><div style="font-size:11px;color:var(--text3)">${esc(b.email||'')}</div></td>
+      <td>${esc(b.service)}</td>
+      <td>${esc(b.date)} ${esc(b.time)}</td>
       <td style="font-family:'Playfair Display',serif;font-weight:700;color:var(--gold)">R$ ${b.price}</td>
       <td><span class="badge ${b.status||'pending'}">${statusLabel[b.status]||'⏳'}</span></td>
     </tr>
@@ -1374,6 +1392,8 @@ async function addManualAppointment(){
   };
   try{
     await db.collection('agendamentos').add(booking);
+    await db.collection('disponibilidade').doc(`${date}_${time}`)
+      .set({date, time, status:'confirmed'});
     closeModal('newAppt');
     // o listener em tempo real já atualiza os painéis
     toast(`Agendamento de ${name} criado!`, 'success');
