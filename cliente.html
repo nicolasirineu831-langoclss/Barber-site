@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BarberPro — Sistema de Agendamento</title>
+<link rel="manifest" href="manifest-cliente.json">
+<meta name="theme-color" content="#C9A84C">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BarberPro">
+<link rel="apple-touch-icon" href="icons/icon-cliente-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -537,6 +544,8 @@ footer{
     <a href="#services" class="footer-link">Serviços</a>
     <a href="#" onclick="openBooking()" class="footer-link">Agendar</a>
     <a href="admin.html" class="footer-link" target="_blank">Área do Empresário</a>
+    <a href="privacidade.html" class="footer-link">Privacidade</a>
+    <a href="termos.html" class="footer-link">Termos de Uso</a>
   </div>
   <p style="font-size:12px;color:var(--text3);margin-top:20px">© 2025 BarberPro. Todos os direitos reservados.</p>
 </footer>
@@ -1161,6 +1170,12 @@ auth.onAuthStateChanged(async (fbUser)=>{
     updateProfile();
   }
 });
+</script>
+<script>
+  // Registra o service worker para o app funcionar como PWA/APK instalável
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js').catch(()=>{}));
+  }
 </script>
 </body>
 </html>
