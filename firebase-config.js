@@ -10,5 +10,12 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
+// App Check: garante que só o próprio site (esse domínio) consegue falar com o Firebase.
+// A chave abaixo é a "chave de site" pública do reCAPTCHA Enterprise (não é segredo).
+firebase.appCheck().activate(
+  new firebase.appCheck.ReCaptchaEnterpriseProvider('6LcqJ5wtAAAAALka6U0BcNjF-h2t9Th_P4NMAwOi'),
+  true // renova o token automaticamente
+);
+
 const auth = firebase.auth();
 const db = firebase.firestore();
