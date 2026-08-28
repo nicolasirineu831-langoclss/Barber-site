@@ -543,7 +543,6 @@ footer{
   <div class="footer-links">
     <a href="#services" class="footer-link">Serviços</a>
     <a href="#" onclick="openBooking()" class="footer-link">Agendar</a>
-    <a href="admin.html" class="footer-link" target="_blank">Área do Empresário</a>
     <a href="privacidade.html" class="footer-link">Privacidade</a>
     <a href="termos.html" class="footer-link">Termos de Uso</a>
   </div>
@@ -583,27 +582,10 @@ footer{
         <p style="text-align:center;margin-top:16px;font-size:13px;color:var(--text2)">
           Não tem conta? <span class="form-link" onclick="switchTab('register')">Cadastre-se</span>
         </p>
-        <div class="form-divider">ou acesse como</div>
-        <p style="text-align:center;font-size:13px;color:var(--text2)">
-          É dono de negócio? <a href="admin.html" class="form-link">Cadastrar Empresa →</a>
-        </p>
       </div>
 
       <!-- REGISTER -->
       <div id="registerForm" style="display:none">
-        <p style="font-size:14px;color:var(--text2);margin-bottom:16px">Você é:</p>
-        <div class="register-types">
-          <div class="reg-type active" id="typeClient" onclick="selectType('client')">
-            <div class="reg-type-icon">👤</div>
-            <div class="reg-type-title">Cliente</div>
-            <div class="reg-type-sub">Quero agendar serviços</div>
-          </div>
-          <div class="reg-type" id="typeBusiness" onclick="selectType('business')">
-            <div class="reg-type-icon">💼</div>
-            <div class="reg-type-title">Empresa</div>
-            <div class="reg-type-sub">Tenho um negócio</div>
-          </div>
-        </div>
         <div id="clientRegisterFields">
           <div class="form-group">
             <label class="form-label">Nome completo</label>
@@ -630,12 +612,6 @@ footer{
             </div>
           </div>
           <button class="btn-submit" onclick="doRegister()">Criar Conta de Cliente</button>
-        </div>
-        <div id="businessRedirect" style="display:none;text-align:center;padding:20px">
-          <div style="font-size:40px;margin-bottom:12px">🏪</div>
-          <p style="font-size:15px;font-weight:600;margin-bottom:8px">Cadastro de Empresa</p>
-          <p style="font-size:13px;color:var(--text2);margin-bottom:20px">O cadastro de empresas é feito em uma área exclusiva para proprietários.</p>
-          <a href="admin.html" class="btn-submit" style="display:block;text-align:center;text-decoration:none">Ir para Área do Empresário →</a>
         </div>
         <p style="text-align:center;margin-top:16px;font-size:13px;color:var(--text2)">
           Já tem conta? <span class="form-link" onclick="switchTab('login')">Fazer login</span>
@@ -839,14 +815,6 @@ function closeModal(id){
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
-let regType = 'client';
-function selectType(t){
-  regType = t;
-  document.getElementById('typeClient').classList.toggle('active', t==='client');
-  document.getElementById('typeBusiness').classList.toggle('active', t==='business');
-  document.getElementById('clientRegisterFields').style.display = t==='client' ? 'block' : 'none';
-  document.getElementById('businessRedirect').style.display = t==='business' ? 'block' : 'none';
-}
 function switchTab(tab){
   document.getElementById('tabLogin').classList.toggle('active', tab==='login');
   document.getElementById('tabRegister').classList.toggle('active', tab==='register');
