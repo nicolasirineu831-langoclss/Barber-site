@@ -11,6 +11,19 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="BarberPro">
 <link rel="apple-touch-icon" href="icons/icon-cliente-192.png">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://www.googleapis.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' https://fonts.gstatic.com;
+  img-src 'self' data:;
+  connect-src 'self' https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://www.google.com https://content-firebaseappcheck.googleapis.com https://firebaseinstallations.googleapis.com;
+  frame-src https://www.google.com;
+  base-uri 'self';
+  form-action 'self';
+  upgrade-insecure-requests;
+">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -443,10 +456,10 @@ footer{
   .modal-overlay{align-items:flex-end;padding:0}
 }
 </style>
-<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-check-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-check-compat.js"></script>
 <script src="firebase-config.js"></script>
 </head>
 <body>
@@ -690,6 +703,11 @@ footer{
         <div class="form-group">
           <label class="form-label">Observações (opcional)</label>
           <input class="form-input" id="bkNotes" placeholder="Ex: barba e cabelo, vou atrasar 5 min...">
+        </div>
+        <!-- Honeypot anti-spam: campo invisível para humanos. Só um bot preencheria isso. -->
+        <div style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden" aria-hidden="true">
+          <label for="bkWebsite">Deixe em branco</label>
+          <input type="text" id="bkWebsite" name="bkWebsite" tabindex="-1" autocomplete="off">
         </div>
         <div style="display:flex;gap:10px">
           <button class="btn-submit" style="background:var(--bg3);color:var(--text);flex:1" onclick="nextStep(2)">← Voltar</button>
@@ -1051,6 +1069,20 @@ function renderSummary(){
   `;
 }
 async function confirmBooking(){
+  // Honeypot: campo invisível que só um bot preencheria. Se vier preenchido,
+  // finge que deu certo (não avisa o bot) e não grava nada no banco.
+  const honeypot = document.getElementById('bkWebsite')?.value;
+  if(honeypot){
+    toast('Agendamento confirmado! 🎉', 'success');
+    return;
+  }
+  // Cooldown: evita múltiplos envios automatizados em sequência do mesmo aparelho.
+  const ultimoEnvio = Number(localStorage.getItem('bp_ultimo_agendamento') || 0);
+  if(Date.now() - ultimoEnvio < 30000){
+    toast('Aguarde alguns segundos antes de agendar de novo.', 'error');
+    return;
+  }
+
   const phone = document.getElementById('bkPhone').value.replace(/\D/g,'');
   const name = document.getElementById('bkName').value.trim();
   const email = document.getElementById('bkEmail').value.trim();
@@ -1097,6 +1129,7 @@ async function confirmBooking(){
     // Espelho público sem dados pessoais, só pra marcar o horário como ocupado no calendário.
     await db.collection('disponibilidade').doc(`${booking.date}_${booking.time}`)
       .set({date: booking.date, time: booking.time, status: 'pending'});
+    localStorage.setItem('bp_ultimo_agendamento', String(Date.now()));
   }catch(e){
     toast('Erro ao salvar agendamento: ' + e.message, 'error');
     return;
