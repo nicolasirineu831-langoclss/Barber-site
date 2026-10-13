@@ -40,12 +40,12 @@
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
-  script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://www.googleapis.com;
+  script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://www.googleapis.com https://apis.google.com;
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   font-src 'self' https://fonts.gstatic.com;
   img-src 'self' data: https:;
-  connect-src 'self' https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://www.google.com https://content-firebaseappcheck.googleapis.com https://firebaseinstallations.googleapis.com;
-  frame-src https://www.google.com https://www.instagram.com;
+  connect-src 'self' https://barberpro-suaempresa.firebaseapp.com https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://www.google.com https://content-firebaseappcheck.googleapis.com https://firebaseinstallations.googleapis.com;
+  frame-src https://www.google.com https://www.instagram.com https://barberpro-suaempresa.firebaseapp.com;
   base-uri 'self';
   form-action 'self';
   upgrade-insecure-requests;
@@ -1406,7 +1406,7 @@ function switchTab(tab){
   document.getElementById('loginForm').style.display = tab==='login' ? 'block' : 'none';
   document.getElementById('registerForm').style.display = tab==='register' ? 'block' : 'none';
 }
-async function doLogin(){
+async function _doLogin(){
   const email = document.getElementById('loginEmail').value.trim();
   const pass = document.getElementById('loginPassword').value;
   if(!email||!pass) return toast(t('tFillPass'), 'error');
@@ -1416,9 +1416,9 @@ async function doLogin(){
     state.user = {uid: cred.user.uid, ...(perfil.exists ? perfil.data() : {name: email, email})};
     closeModal('auth'); updateProfile();
     toast(`${t('tWelcome')} ${state.user.name}! 👋`, 'success');
-  }catch(e){ toast(t('tBadLogin'), 'error'); }
+  }catch(e){ toast(t('tBadLogin')+' ['+(e.code||e.message)+']', 'error'); }
 }
-async function doRegister(){
+async function _doRegister(){
   const name = document.getElementById('regName').value.trim();
   const email = document.getElementById('regEmail').value.trim();
   const phone = document.getElementById('regPhone').value.trim();
@@ -1728,6 +1728,17 @@ function scheduleReminder(booking){
     setTimeout(()=>{ toast(`${t('tReminder')} ${booking.service} ${t('tReminder2')}`, 'info'); }, diff);
   }
 }
+
+
+// Mostra "Aguarde..." ao tocar e avisa se o servidor não responder (evita botão "mudo")
+function vigiaRede(){
+  toast('Aguarde...', 'info');
+  const id = setTimeout(()=>toast('Sem resposta do servidor. Desative bloqueador de anúncios/economia de dados e tente de novo.', 'error'), 12000);
+  return ()=>clearTimeout(id);
+}
+function comVigia(fn){ return async function(...a){ const fim = vigiaRede(); try{ return await fn.apply(this,a); } finally{ fim(); } }; }
+const doLogin = comVigia(_doLogin);
+const doRegister = comVigia(_doRegister);
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function initApp(){

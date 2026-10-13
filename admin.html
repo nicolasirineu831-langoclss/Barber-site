@@ -34,12 +34,12 @@
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
-  script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://www.googleapis.com;
+  script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://www.googleapis.com https://apis.google.com;
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   font-src 'self' https://fonts.gstatic.com;
   img-src 'self' data: https:;
-  connect-src 'self' https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://www.google.com https://content-firebaseappcheck.googleapis.com https://firebaseinstallations.googleapis.com;
-  frame-src https://www.google.com;
+  connect-src 'self' https://barberpro-suaempresa.firebaseapp.com https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://www.google.com https://content-firebaseappcheck.googleapis.com https://firebaseinstallations.googleapis.com;
+  frame-src https://www.google.com https://barberpro-suaempresa.firebaseapp.com;
   base-uri 'self';
   form-action 'self';
   upgrade-insecure-requests;
@@ -1183,7 +1183,7 @@ function switchAuthTab(tab){
   document.getElementById('aLoginForm').style.display = tab==='login' ? 'block' : 'none';
   document.getElementById('aRegisterForm').style.display = tab==='register' ? 'block' : 'none';
 }
-async function adminLogin(){
+async function _adminLogin(){
   const email = document.getElementById('aLoginEmail').value.trim();
   const pass = document.getElementById('aLoginPass').value;
   if(!email||!pass) return toast('Preencha e-mail e senha', 'error');
@@ -1197,10 +1197,10 @@ async function adminLogin(){
     adminState.admin = {uid: cred.user.uid, ...doc.data()};
     initAdminApp();
   }catch(e){
-    toast('Credenciais inválidas', 'error');
+    toast('Credenciais inválidas ['+(e.code||e.message)+']', 'error');
   }
 }
-async function adminRegister(){
+async function _adminRegister(){
   const name = document.getElementById('aRegName').value.trim();
   const email = document.getElementById('aRegEmail').value.trim();
   const biz = document.getElementById('aRegBiz').value.trim();
@@ -1980,6 +1980,17 @@ function fillNaBarber(){
   document.getElementById('naBarber').innerHTML = '<option value="">Selecionar barbeiro</option>' +
     adminState.barbers.map(b=>`<option value="${esc(b.id)}">${esc(b.nome)}</option>`).join('');
 }
+
+
+// Mostra "Aguarde..." ao tocar e avisa se o servidor não responder (evita botão "mudo")
+function vigiaRede(){
+  toast('Aguarde...', 'info');
+  const id = setTimeout(()=>toast('Sem resposta do servidor. Desative bloqueador de anúncios/economia de dados e tente de novo.', 'error'), 12000);
+  return ()=>clearTimeout(id);
+}
+function comVigia(fn){ return async function(...a){ const fim = vigiaRede(); try{ return await fn.apply(this,a); } finally{ fim(); } }; }
+const adminLogin = comVigia(_adminLogin);
+const adminRegister = comVigia(_adminRegister);
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 // Mantém a sessão do admin entre visitas (Firebase Auth cuida da persistência)
