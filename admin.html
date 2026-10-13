@@ -1,6 +1,32 @@
 <!DOCTYPE html>
 <html lang="pt-BR" data-theme="dark">
 <head>
+<script>
+// Diagnóstico: abra o site com ?debug=1 no final do endereço para ver erros na tela.
+(function(){
+  if(!/[?&]debug=1/.test(location.search)) return;
+  var msgs=[];
+  function show(){
+    var b=document.getElementById('diagBanner');
+    if(!b){ b=document.createElement('div'); b.id='diagBanner';
+      b.style.cssText='position:fixed;left:8px;right:8px;bottom:8px;z-index:99999;background:#7a1010;color:#fff;font:12px/1.4 monospace;padding:10px;border-radius:8px;max-height:45vh;overflow:auto;white-space:pre-wrap';
+      (document.body||document.documentElement).appendChild(b); }
+    b.textContent='DIAGNOSTICO (tire print e envie):\n'+msgs.join('\n');
+  }
+  window.addEventListener('error',function(e){
+    var t=e.target;
+    if(t && t!==window && (t.src||t.href)) msgs.push('NAO CARREGOU: '+(t.src||t.href));
+    else msgs.push('ERRO: '+e.message+' ('+String(e.filename||'').split('/').pop()+':'+e.lineno+')');
+    show();
+  },true);
+  window.addEventListener('unhandledrejection',function(e){ msgs.push('PROMESSA: '+((e.reason&&e.reason.message)||e.reason)); show(); });
+  window.addEventListener('load',function(){
+    msgs.push('firebase: '+typeof firebase+' | auth: '+typeof auth+' | db: '+typeof db+' | navegador: '+navigator.userAgent.slice(0,90));
+    show();
+  });
+})();
+</script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BarberPro Admin — Painel do Empresário</title>
