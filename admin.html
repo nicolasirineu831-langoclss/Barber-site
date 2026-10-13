@@ -11,7 +11,7 @@
   script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://www.googleapis.com;
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   font-src 'self' https://fonts.gstatic.com;
-  img-src 'self' data:;
+  img-src 'self' data: https:;
   connect-src 'self' https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://www.google.com https://content-firebaseappcheck.googleapis.com https://firebaseinstallations.googleapis.com;
   frame-src https://www.google.com;
   base-uri 'self';
@@ -450,6 +450,7 @@ tr:hover td{background:rgba(201,168,76,0.03)}
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-check-compat.js"></script>
 <script src="firebase-config.js"></script>
+<script src="shared.js"></script>
 </head>
 <body>
 
@@ -583,6 +584,15 @@ tr:hover td{background:rgba(201,168,76,0.03)}
         </button>
         <button class="nav-item" onclick="showPage('services')">
           <span class="nav-item-icon">✂</span> Serviços
+        </button>
+        <button class="nav-item" onclick="showPage('barbers')">
+          <span class="nav-item-icon">🧔</span> Barbeiros
+        </button>
+        <button class="nav-item" onclick="showPage('gallery')">
+          <span class="nav-item-icon">🖼</span> Galeria
+        </button>
+        <button class="nav-item" onclick="showPage('site')">
+          <span class="nav-item-icon">🌐</span> Site e Conteúdo
         </button>
         <button class="nav-item" onclick="showPage('history')">
           <span class="nav-item-icon">📋</span> Histórico
@@ -730,9 +740,124 @@ tr:hover td{background:rgba(201,168,76,0.03)}
         <!-- ── SERVICES ── -->
         <div class="page" id="servicesPage">
           <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
-            <button class="btn-primary" onclick="openModal('newSvc')" style="width:auto;padding:10px 20px;font-size:14px">+ Novo Serviço</button>
+            <button class="btn-primary" onclick="openNewService()" style="width:auto;padding:10px 20px;font-size:14px">+ Novo Serviço</button>
           </div>
           <div class="services-admin-grid" id="servicesAdminGrid"></div>
+        </div>
+
+        <!-- ── BARBERS ── -->
+        <div class="page" id="barbersPage">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+            <p style="font-size:13px;color:var(--text2);max-width:520px">Cadastre cada barbeiro com foto, dias e horários próprios. Os clientes escolhem o profissional na hora de agendar.</p>
+            <button class="btn-primary" onclick="openBarberModal()" style="width:auto;padding:10px 20px;font-size:14px">+ Novo Barbeiro</button>
+          </div>
+          <div class="services-admin-grid" id="barbersAdminGrid"></div>
+        </div>
+
+        <!-- ── GALLERY ── -->
+        <div class="page" id="galleryPage">
+          <div class="settings-section">
+            <div class="settings-title">🖼 Galeria de cortes</div>
+            <p style="font-size:13px;color:var(--text2);margin-bottom:14px">Envie fotos dos seus cortes (elas são reduzidas automaticamente). Aparecem no site na seção "Galeria".</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <label class="btn-primary" style="width:auto;padding:10px 20px;font-size:14px;cursor:pointer;display:inline-block">
+                📷 Enviar fotos
+                <input type="file" accept="image/*" multiple id="galFiles" style="display:none" onchange="uploadGaleria(this.files);this.value=''">
+              </label>
+              <input class="form-input" id="galUrl" placeholder="ou cole o link (https://...) de uma imagem" style="flex:1;min-width:200px">
+              <button class="status-btn confirm" onclick="addGaleriaUrl()" style="padding:11px 16px;font-size:13px">+ Adicionar link</button>
+            </div>
+          </div>
+          <div class="services-admin-grid" id="galleryAdminGrid"></div>
+        </div>
+
+        <!-- ── SITE ── -->
+        <div class="page" id="sitePage">
+          <div class="settings-section">
+            <div class="settings-title">🏷 Marca da barbearia</div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Nome da barbearia</label><input class="form-input" id="stNome" placeholder="Ex: Classic Barbearia"></div>
+              <div class="form-group"><label class="form-label">Cor da marca</label><input class="form-input" type="color" id="stCor" style="height:46px;padding:4px"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Slogan (rodapé)</label><input class="form-input" id="stSlogan" placeholder="Ex: Tradição e estilo em Belém"></div>
+              <div class="form-group"><label class="form-label">Slogan em inglês (opcional)</label><input class="form-input" id="stSloganEn"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Logo</label>
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                <img id="stLogoPrev" alt="" style="height:48px;border-radius:8px;display:none">
+                <label class="status-btn confirm" style="cursor:pointer;padding:10px 16px;font-size:13px">Escolher logo
+                  <input type="file" accept="image/*" style="display:none" onchange="uploadLogo(this.files[0]);this.value=''"></label>
+                <button class="status-btn cancel" onclick="removerLogo()" style="padding:10px 16px;font-size:13px">Remover</button>
+              </div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-info"><div class="setting-label">Versão em inglês</div><div class="setting-desc">Mostra o botão PT/EN no site (útil para turistas e estrangeiros)</div></div>
+              <div class="toggle on" id="stIngles" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-title">📍 Contato e localização</div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">WhatsApp do botão fixo</label><input class="form-input" id="stWpp" placeholder="(91) 99999-9999"></div>
+              <div class="form-group"><label class="form-label">Instagram</label><input class="form-input" id="stInsta" placeholder="@suabarbearia"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Endereço completo</label><input class="form-input" id="stEnd" placeholder="Rua, número, bairro, cidade - UF"></div>
+            <div class="form-group"><label class="form-label">Link do Google Maps (opcional — botão "Como chegar")</label><input class="form-input" id="stMaps" placeholder="https://maps.app.goo.gl/..."></div>
+            <div class="form-group"><label class="form-label">Aviso nos horários (ex: "Hoje fechamos às 15h") — deixe vazio para ocultar</label><input class="form-input" id="stAviso" placeholder="Aviso que aparece em destaque no site"></div>
+            <div class="form-group"><label class="form-label">Nota sobre os preços (opcional)</label><input class="form-input" id="stNotaPrecos" placeholder="Ex: Valores podem variar conforme o comprimento do cabelo"></div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-title">🕐 Horários de funcionamento</div>
+            <p style="font-size:12px;color:var(--text3);margin-bottom:10px">Esses horários definem o que o cliente pode agendar e o aviso "Aberto agora". Mantenha sempre atualizado.</p>
+            <div id="stHorarios"></div>
+            <div class="form-group" style="margin-top:16px">
+              <label class="form-label">Feriados / dias de folga (o site bloqueia esses dias)</label>
+              <div style="display:flex;gap:8px"><input class="form-input" type="date" id="stNovaData"><button class="status-btn confirm" onclick="addDataFechada()" style="padding:0 16px">+ Adicionar</button></div>
+              <div id="stDatas" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"></div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-title">☕ Ambiente e diferenciais</div>
+            <div id="stDifs"></div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <input class="form-input" id="stDifIcon" placeholder="🎮" maxlength="4" style="width:70px">
+              <input class="form-input" id="stDifLabel" placeholder="Novo diferencial (ex: Sinuca)">
+              <button class="status-btn confirm" onclick="addDif()" style="padding:0 16px">+</button>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-title">⭐ Avaliações do Google em destaque</div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Nota no Google (ex: 4,8)</label><input class="form-input" id="stNota" placeholder="4,8"></div>
+              <div class="form-group"><label class="form-label">Quantidade de avaliações</label><input class="form-input" id="stQtd" placeholder="312"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Link para avaliar/ver no Google</label><input class="form-input" id="stGLink" placeholder="https://g.page/r/..."></div>
+            <p style="font-size:12px;color:var(--text3);margin-bottom:10px">Copie aqui as melhores avaliações (com autorização do cliente) para destacar no site:</p>
+            <div id="stRevs"></div>
+            <button class="status-btn confirm" onclick="addRev()" style="padding:10px 16px;margin-top:8px">+ Adicionar avaliação</button>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-title">💎 Clube de mensalistas / assinatura</div>
+            <p style="font-size:12px;color:var(--text3);margin-bottom:10px">Cada plano aparece no site com botão que abre o WhatsApp. O pagamento é combinado direto com o cliente.</p>
+            <div id="stPlanos"></div>
+            <button class="status-btn confirm" onclick="addPlano()" style="padding:10px 16px;margin-top:8px">+ Novo plano</button>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-title">📸 Posts do Instagram no site</div>
+            <p style="font-size:12px;color:var(--text3);margin-bottom:10px">Cole o link de até 6 posts ou reels (ex: https://www.instagram.com/p/XXXX/). Perfil precisa ser público.</p>
+            <div id="stPosts"></div>
+            <button class="status-btn confirm" onclick="addPost()" style="padding:10px 16px;margin-top:8px">+ Adicionar post</button>
+          </div>
+
+          <button class="btn-primary" onclick="saveSite()" style="position:sticky;bottom:12px;z-index:5">💾 Salvar alterações do site</button>
         </div>
 
         <!-- ── HISTORY ── -->
@@ -836,6 +961,10 @@ tr:hover td{background:rgba(201,168,76,0.03)}
           <input class="form-input" id="naEmail" type="email" placeholder="cliente@email.com">
         </div>
       </div>
+      <div class="form-group" id="naBarberWrap" style="display:none">
+        <label class="form-label">Barbeiro</label>
+        <select class="form-input" id="naBarber" style="appearance:none" onchange="populateTimes()"></select>
+      </div>
       <div class="form-group">
         <label class="form-label">Serviço</label>
         <select class="form-input" id="naService" style="appearance:none">
@@ -863,39 +992,66 @@ tr:hover td{background:rgba(201,168,76,0.03)}
   </div>
 </div>
 
-<!-- NEW SERVICE MODAL -->
+<!-- NEW / EDIT SERVICE MODAL -->
 <div class="modal-overlay" id="newSvcModal">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title">+ Novo Serviço</div>
+      <div class="modal-title" id="svcModalTitle">+ Novo Serviço</div>
       <button class="modal-close" onclick="closeModal('newSvc')">✕</button>
     </div>
     <div class="modal-body">
+      <input type="hidden" id="nsId">
       <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Ícone</label>
-          <input class="form-input" id="nsIcon" placeholder="Ex: ✂ 💈 🪒" maxlength="4">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Nome</label>
-          <input class="form-input" id="nsName" placeholder="Nome do serviço">
-        </div>
+        <div class="form-group"><label class="form-label">Ícone</label><input class="form-input" id="nsIcon" placeholder="Ex: ✂ 💈 🪒" maxlength="4"></div>
+        <div class="form-group"><label class="form-label">Nome</label><input class="form-input" id="nsName" placeholder="Nome do serviço"></div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Descrição</label>
-        <input class="form-input" id="nsDesc" placeholder="Breve descrição">
+      <div class="form-group"><label class="form-label">Descrição</label><input class="form-input" id="nsDesc" placeholder="Breve descrição"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Preço (R$)</label><input class="form-input" type="number" step="0.01" id="nsPrice" placeholder="50"></div>
+        <div class="form-group"><label class="form-label">Duração (min)</label><input class="form-input" type="number" id="nsDur" placeholder="45"></div>
+      </div>
+      <div class="form-group"><label class="form-label">O que está incluso (um item por linha)</label>
+        <textarea class="form-input" rows="4" id="nsIncl" placeholder="Toalha quente&#10;Hidratação&#10;Finalização com pomada"></textarea></div>
+      <details style="margin-bottom:14px"><summary style="cursor:pointer;font-size:13px;color:var(--text2)">🇺🇸 Versão em inglês (opcional)</summary>
+        <div class="form-group" style="margin-top:10px"><label class="form-label">Nome</label><input class="form-input" id="nsNameEn"></div>
+        <div class="form-group"><label class="form-label">Descrição</label><input class="form-input" id="nsDescEn"></div>
+        <div class="form-group"><label class="form-label">Incluso (um por linha)</label><textarea class="form-input" rows="3" id="nsInclEn"></textarea></div>
+      </details>
+      <button class="btn-primary" onclick="saveService()">💾 Salvar Serviço</button>
+    </div>
+  </div>
+</div>
+
+<!-- BARBER MODAL -->
+<div class="modal-overlay" id="barberModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="bModalTitle">+ Novo Barbeiro</div>
+      <button class="modal-close" onclick="closeModal('barber')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="bId">
+      <div class="form-group" style="display:flex;align-items:center;gap:14px">
+        <img id="bFotoPrev" alt="" style="width:72px;height:72px;border-radius:50%;object-fit:cover;background:var(--bg3);display:none">
+        <label class="status-btn confirm" style="cursor:pointer;padding:10px 16px;font-size:13px">📷 Foto
+          <input type="file" accept="image/*" style="display:none" onchange="uploadFotoBarbeiro(this.files[0]);this.value=''"></label>
       </div>
       <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Preço (R$)</label>
-          <input class="form-input" type="number" id="nsPrice" placeholder="50">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Duração (min)</label>
-          <input class="form-input" type="number" id="nsDur" placeholder="45">
-        </div>
+        <div class="form-group"><label class="form-label">Nome</label><input class="form-input" id="bNome" placeholder="Ex: Kleydir"></div>
+        <div class="form-group"><label class="form-label">Especialidade</label><input class="form-input" id="bEsp" placeholder="Ex: Degradê e barba"></div>
       </div>
-      <button class="btn-primary" onclick="addService()">+ Adicionar Serviço</button>
+      <div class="form-group"><label class="form-label">Sobre ele</label><input class="form-input" id="bBio" placeholder="Frase curta de apresentação"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Sobre (inglês, opcional)</label><input class="form-input" id="bBioEn"></div>
+        <div class="form-group"><label class="form-label">Especialidade (inglês, opcional)</label><input class="form-input" id="bEspEn"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Dias de atendimento</label>
+        <div id="bDias" style="display:flex;gap:6px;flex-wrap:wrap"></div></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Começa às</label><input class="form-input" type="time" id="bIni" value="08:00"></div>
+        <div class="form-group"><label class="form-label">Termina às</label><input class="form-input" type="time" id="bFim" value="18:00"></div>
+      </div>
+      <button class="btn-primary" onclick="saveBarbeiro()">💾 Salvar barbeiro</button>
     </div>
   </div>
 </div>
@@ -1071,6 +1227,7 @@ async function initAdminApp(){
   await carregarAdminServicos();
   renderAdminServices();
   renderSettings();
+  await carregarExtrasAdmin();
   ouvirAgendamentosAdmin(); // dispara render dos agendamentos/dashboard/histórico em tempo real
 }
 
@@ -1084,14 +1241,14 @@ function toggleSidebar(){
 const pageTitles = {
   dashboard:'📊 Dashboard', appointments:'📅 Agendamentos',
   calendar:'🗓 Calendário', clients:'👥 Clientes',
-  services:'✂ Serviços', history:'📋 Histórico', settings:'⚙️ Configurações'
+  services:'✂ Serviços', barbers:'🧔 Barbeiros', gallery:'🖼 Galeria', site:'🌐 Site e Conteúdo', history:'📋 Histórico', settings:'⚙️ Configurações'
 };
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById(id+'Page').classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const items = document.querySelectorAll('.nav-item');
-  const map = ['dashboard','appointments','calendar','clients','services','history','settings'];
+  const map = ['dashboard','appointments','calendar','clients','services','barbers','gallery','site','history','settings'];
   const idx = map.indexOf(id);
   if(idx>=0) items[idx].classList.add('active');
   document.getElementById('pageTitle').textContent = pageTitles[id] || id;
@@ -1187,7 +1344,7 @@ async function updateStatus(id, status){
   try{
     await db.collection('agendamentos').doc(id).update({status});
     // mantém o espelho público (sem dados pessoais) em sincronia
-    await db.collection('disponibilidade').doc(`${b.date}_${b.time}`)
+    await db.collection('disponibilidade').doc(dispKey(b.date, b.time, b.barberId))
       .set({date: b.date, time: b.time, status}, {merge:true});
   }catch(e){
     return toast('Erro ao atualizar: ' + e.message, 'error');
@@ -1219,7 +1376,7 @@ function renderAppointments(){
         <div style="font-weight:600;font-size:14px">${esc(b.name)}</div>
         <div style="font-size:11px;color:var(--text3)">${esc(b.phone||b.email||'—')}</div>
       </td>
-      <td>${esc(b.service)}</td>
+      <td>${esc(b.service)}${b.barber?`<div style="font-size:11px;color:var(--text3)">✂ ${esc(b.barber)}</div>`:''}</td>
       <td>
         <div style="font-size:14px;font-weight:500">${esc(b.date)}</div>
         <div style="font-size:12px;color:var(--gold)">${esc(b.time)}</div>
@@ -1280,7 +1437,7 @@ function selectAdminDay(dateStr){
     <div class="appt-item">
       <div class="appt-time-badge">🕐 ${esc(b.time)}</div>
       <div class="appt-client">${esc(b.name)}</div>
-      <div class="appt-detail">${esc(b.service)} • R$ ${b.price} • ${b.dur||45}min</div>
+      <div class="appt-detail">${esc(b.service)} • R$ ${b.price} • ${b.dur||45}min${b.barber?' • ✂ '+esc(b.barber):''}</div>
       ${b.phone?`<div class="appt-detail">📱 ${esc(b.phone)}</div>`:''}
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
         <span class="badge ${b.status||'pending'}">${b.status==='confirmed'?'✅ Confirmado':b.status==='done'?'✔ Concluído':'⏳ Pendente'}</span>
@@ -1332,30 +1489,13 @@ function renderAdminServices(){
       <div style="font-size:12px;color:var(--text2);margin-bottom:8px">${esc(s.desc)}</div>
       <div class="svc-card-price">R$ ${s.price}</div>
       <div class="svc-card-dur">⏱ ${s.dur} minutos</div>
+      ${(s.inclui&&s.inclui.length)?`<div style="font-size:11px;color:var(--text2);margin-top:8px">✓ ${s.inclui.map(esc).join(' • ')}</div>`:''}
       <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="status-btn confirm" onclick="editService('${s.id}')" style="font-size:11px">✏️ Editar</button>
         <button class="status-btn cancel" onclick="removeService('${s.id}')" style="font-size:11px">🗑 Remover</button>
       </div>
     </div>
   `).join('');
-}
-async function addService(){
-  const icon = document.getElementById('nsIcon').value.trim()||'✂';
-  const name = document.getElementById('nsName').value.trim();
-  const desc = document.getElementById('nsDesc').value.trim();
-  const price = parseFloat(document.getElementById('nsPrice').value)||0;
-  const dur = parseInt(document.getElementById('nsDur').value)||45;
-  if(!name||!price) return toast('Preencha nome e preço', 'error');
-  try{
-    await db.collection('servicos').add({
-      icon, name, desc, price, dur, ativo:true, ordem: adminState.adminServices.length
-    });
-    await carregarAdminServicos();
-    closeModal('newSvc');
-    renderAdminServices();
-    toast(`Serviço "${name}" adicionado!`, 'success');
-  }catch(e){
-    toast('Erro ao adicionar serviço: ' + e.message, 'error');
-  }
 }
 async function removeService(id){
   if(!confirm('Remover este serviço?')) return;
@@ -1377,7 +1517,7 @@ function renderHistory(){
   document.getElementById('historyBody').innerHTML = all.length ? all.map(b=>`
     <tr>
       <td><div style="font-weight:600">${esc(b.name)}</div><div style="font-size:11px;color:var(--text3)">${esc(b.email||'')}</div></td>
-      <td>${esc(b.service)}</td>
+      <td>${esc(b.service)}${b.barber?` <span style="color:var(--text3)">• ${esc(b.barber)}</span>`:''}</td>
       <td>${esc(b.date)} ${esc(b.time)}</td>
       <td style="font-family:'Playfair Display',serif;font-weight:700;color:var(--gold)">R$ ${b.price}</td>
       <td><span class="badge ${b.status||'pending'}">${statusLabel[b.status]||'⏳'}</span></td>
@@ -1388,10 +1528,14 @@ function renderHistory(){
 // ── MANUAL APPOINTMENT ────────────────────────────────────────────────────────
 function populateTimes(){
   const dateVal = document.getElementById('naDate').value;
-  const taken = adminState.bookings.filter(b=>b.date===dateVal&&b.status!=='cancelled').map(b=>b.time);
+  const barberId = document.getElementById('naBarber')?.value || '';
+  const barb = adminState.barbers.find(b=>b.id===barberId) || null;
+  let slots = dateVal ? gerarSlots(adminState.site, dateVal, barb) : [];
+  if(!slots.length) slots = [...HOURS]; // dono pode encaixar fora do horário padrão
+  const taken = t => adminState.bookings.some(b=>ocupaBarbeiro(b, dateVal, t, barberId||null));
   const sel = document.getElementById('naTime');
   sel.innerHTML = '<option value="">Selecionar horário</option>'+
-    HOURS.map(h=>`<option value="${h}" ${taken.includes(h)?'disabled':''} ${taken.includes(h)?'style="color:var(--danger)"':''}>${h} ${taken.includes(h)?'(ocupado)':''}</option>`).join('');
+    slots.map(h=>`<option value="${h}" ${taken(h)?'disabled':''}>${h} ${taken(h)?'(ocupado)':''}</option>`).join('');
 }
 document.getElementById('naDate').addEventListener('change', populateTimes);
 async function addManualAppointment(){
@@ -1399,10 +1543,13 @@ async function addManualAppointment(){
   const phone = document.getElementById('naPhone').value.trim();
   const email = document.getElementById('naEmail').value.trim();
   const svcId = document.getElementById('naService').value;
+  const barberId = document.getElementById('naBarber')?.value || '';
+  const barb = adminState.barbers.find(b=>b.id===barberId) || null;
   const date = document.getElementById('naDate').value;
   const time = document.getElementById('naTime').value;
   const notes = document.getElementById('naNotes').value.trim();
   if(!name||!svcId||!date||!time) return toast('Preencha os campos obrigatórios', 'error');
+  if(adminState.barbers.length && !barb) return toast('Escolha o barbeiro', 'error');
   const svc = adminState.adminServices.find(s=>s.id===svcId);
   if(!svc) return toast('Serviço inválido', 'error');
   const booking = {
@@ -1412,10 +1559,12 @@ async function addManualAppointment(){
     date, time, status:'confirmed',
     createdAt:new Date().toISOString()
   };
+  if(barb){ booking.barberId = barb.id; booking.barber = barb.nome; }
   try{
     await db.collection('agendamentos').add(booking);
-    await db.collection('disponibilidade').doc(`${date}_${time}`)
-      .set({date, time, status:'confirmed'});
+    const espelho = {date, time, status:'confirmed'};
+    if(barb) espelho.barberId = barb.id;
+    await db.collection('disponibilidade').doc(dispKey(date, time, barb?.id)).set(espelho);
     closeModal('newAppt');
     // o listener em tempo real já atualiza os painéis
     toast(`Agendamento de ${name} criado!`, 'success');
@@ -1454,6 +1603,356 @@ function renderSettings(){
       <strong style="text-transform:capitalize">${a.bizType||'—'}</strong>
     </div>
   `;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// NOVOS RECURSOS DO PAINEL: barbeiros, galeria, conteúdo do site, edição de serviços
+// ══════════════════════════════════════════════════════════════════════════════
+adminState.barbers = [];
+adminState.gallery = [];
+adminState.site = null;
+adminState.barberFoto = '';
+
+const DIFS_PADRAO = [
+  {icon:'☕', label:'Café', label_en:'Coffee'}, {icon:'❄️', label:'Climatizado', label_en:'Air-conditioned'},
+  {icon:'📶', label:'Wi-Fi grátis', label_en:'Free Wi-Fi'}, {icon:'🍺', label:'Bar', label_en:'Bar'},
+  {icon:'🕹️', label:'Fliperama', label_en:'Arcade'}, {icon:'🎱', label:'Bilhar', label_en:'Pool table'},
+  {icon:'🧩', label:'Atendimento a crianças com TEA', label_en:'Autism-friendly service for kids'},
+].map(d=>({...d, ativo:false}));
+
+function siteVazio(){
+  return {nome:'', cor:'#C9A84C', slogan:'', ingles:true, horarios:horariosSugeridos(), datasFechadas:[],
+          diferenciais: DIFS_PADRAO.map(d=>({...d})), avaliacoes:[], planos:[], instaPosts:[]};
+}
+
+// ── CARREGAMENTO ──────────────────────────────────────────────────────────────
+async function carregarBarbeirosAdmin(){
+  const snap = await db.collection('barbeiros').where('ativo','==',true).get();
+  adminState.barbers = snap.docs.map(d=>({id:d.id, ...d.data()})).sort((a,b)=>(a.ordem??0)-(b.ordem??0));
+}
+async function carregarGaleriaAdmin(){
+  const snap = await db.collection('galeria').where('ativo','==',true).get();
+  adminState.gallery = snap.docs.map(d=>({id:d.id, ...d.data()})).sort((a,b)=>(a.ordem??0)-(b.ordem??0));
+}
+async function carregarSiteAdmin(){
+  try{
+    const doc = await db.collection('config').doc('site').get();
+    adminState.site = {...siteVazio(), ...(doc.exists ? doc.data() : {})};
+  }catch(e){ adminState.site = siteVazio(); }
+  if(!adminState.site.nome && adminState.admin) adminState.site.nome = adminState.admin.bizName || '';
+  if(!adminState.site.whatsapp && adminState.admin) adminState.site.whatsapp = adminState.admin.phone || '';
+  if(!adminState.site.endereco && adminState.admin) adminState.site.endereco = adminState.admin.addr || '';
+}
+async function carregarExtrasAdmin(){
+  await Promise.all([carregarBarbeirosAdmin(), carregarGaleriaAdmin(), carregarSiteAdmin()]);
+  renderBarbersAdmin(); renderGalleryAdmin(); renderSiteForm(); renderAdminServices(); fillNaBarber();
+}
+
+// ── SERVIÇOS: editar (preço, descrição, o que inclui, inglês) ─────────────────
+const linhas = v => String(v||'').split('\n').map(x=>x.trim()).filter(Boolean);
+function openNewService(){
+  ['nsId','nsIcon','nsName','nsDesc','nsPrice','nsDur','nsIncl','nsNameEn','nsDescEn','nsInclEn'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('svcModalTitle').textContent = '+ Novo Serviço';
+  openModal('newSvc');
+}
+function editService(id){
+  const s = adminState.adminServices.find(x=>x.id===id); if(!s) return;
+  document.getElementById('nsId').value = s.id;
+  document.getElementById('nsIcon').value = s.icon||'';
+  document.getElementById('nsName').value = s.name||'';
+  document.getElementById('nsDesc').value = s.desc||'';
+  document.getElementById('nsPrice').value = s.price??'';
+  document.getElementById('nsDur').value = s.dur??'';
+  document.getElementById('nsIncl').value = (s.inclui||[]).join('\n');
+  document.getElementById('nsNameEn').value = s.name_en||'';
+  document.getElementById('nsDescEn').value = s.desc_en||'';
+  document.getElementById('nsInclEn').value = (s.inclui_en||[]).join('\n');
+  document.getElementById('svcModalTitle').textContent = '✏️ Editar Serviço';
+  openModal('newSvc');
+}
+async function saveService(){
+  const id = document.getElementById('nsId').value;
+  const icon = document.getElementById('nsIcon').value.trim()||'✂';
+  const name = document.getElementById('nsName').value.trim();
+  const desc = document.getElementById('nsDesc').value.trim();
+  const price = parseFloat(String(document.getElementById('nsPrice').value).replace(',','.'))||0;
+  const dur = parseInt(document.getElementById('nsDur').value)||45;
+  if(!name||!price) return toast('Preencha nome e preço', 'error');
+  const data = {icon, name, desc, price, dur,
+    inclui: linhas(document.getElementById('nsIncl').value),
+    name_en: document.getElementById('nsNameEn').value.trim(),
+    desc_en: document.getElementById('nsDescEn').value.trim(),
+    inclui_en: linhas(document.getElementById('nsInclEn').value)};
+  try{
+    if(id) await db.collection('servicos').doc(id).update(data);
+    else await db.collection('servicos').add({...data, ativo:true, ordem: adminState.adminServices.length});
+    await carregarAdminServicos();
+    closeModal('newSvc'); renderAdminServices();
+    toast(id ? 'Serviço atualizado!' : `Serviço "${name}" adicionado!`, 'success');
+  }catch(e){ toast('Erro ao salvar serviço: ' + e.message, 'error'); }
+}
+
+// ── BARBEIROS ─────────────────────────────────────────────────────────────────
+function renderBarbersAdmin(){
+  const g = document.getElementById('barbersAdminGrid'); if(!g) return;
+  g.innerHTML = adminState.barbers.length ? adminState.barbers.map(b=>{
+    const foto = safeImg(b.foto);
+    const dias = (b.dias||[]).slice().sort().map(d=>DIAS_PT[d].slice(0,3)).join(', ') || 'Todos os dias';
+    return `<div class="svc-card">
+      ${foto ? `<img src="${esc(foto)}" alt="" style="width:64px;height:64px;border-radius:50%;object-fit:cover;margin-bottom:10px">` : `<div class="svc-card-icon">💈</div>`}
+      <div class="svc-card-name">${esc(b.nome)}</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:6px">${esc(b.especialidade||'')}</div>
+      <div class="svc-card-dur">📅 ${esc(dias)}</div>
+      <div class="svc-card-dur">🕐 ${esc(b.inicio||'—')} – ${esc(b.fim||'—')}</div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="status-btn confirm" onclick="openBarberModal('${esc(b.id)}')" style="font-size:11px">✏️ Editar</button>
+        <button class="status-btn cancel" onclick="removeBarbeiro('${esc(b.id)}')" style="font-size:11px">🗑 Remover</button>
+      </div></div>`;
+  }).join('') : '<p style="color:var(--text3);font-size:14px;padding:30px;text-align:center;grid-column:1/-1">Nenhum barbeiro cadastrado. Enquanto não houver, o agendamento funciona sem escolha de profissional.</p>';
+}
+function openBarberModal(id){
+  const b = id ? adminState.barbers.find(x=>x.id===id) : null;
+  document.getElementById('bModalTitle').textContent = b ? '✏️ Editar Barbeiro' : '+ Novo Barbeiro';
+  document.getElementById('bId').value = b?.id || '';
+  document.getElementById('bNome').value = b?.nome || '';
+  document.getElementById('bEsp').value = b?.especialidade || '';
+  document.getElementById('bEspEn').value = b?.especialidade_en || '';
+  document.getElementById('bBio').value = b?.bio || '';
+  document.getElementById('bBioEn').value = b?.bio_en || '';
+  document.getElementById('bIni').value = b?.inicio || '08:00';
+  document.getElementById('bFim').value = b?.fim || '18:00';
+  adminState.barberFoto = b?.foto || '';
+  const prev = document.getElementById('bFotoPrev');
+  prev.style.display = safeImg(adminState.barberFoto) ? 'block' : 'none';
+  prev.src = safeImg(adminState.barberFoto) || '';
+  const dias = b?.dias?.length ? b.dias : [1,2,3,4,5,6];
+  document.getElementById('bDias').innerHTML = DIAS_PT.map((n,i)=>
+    `<label style="display:flex;align-items:center;gap:5px;font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;cursor:pointer">
+      <input type="checkbox" value="${i}" ${dias.includes(i)?'checked':''}> ${n.slice(0,3)}</label>`).join('');
+  openModal('barber');
+}
+async function uploadFotoBarbeiro(file){
+  if(!file) return;
+  try{
+    adminState.barberFoto = await comprimirImagem(file, 480, 0.82);
+    const prev = document.getElementById('bFotoPrev'); prev.src = adminState.barberFoto; prev.style.display='block';
+  }catch(e){ toast(e.message,'error'); }
+}
+async function saveBarbeiro(){
+  const id = document.getElementById('bId').value;
+  const nome = document.getElementById('bNome').value.trim();
+  if(!nome) return toast('Digite o nome do barbeiro','error');
+  const dias = [...document.querySelectorAll('#bDias input:checked')].map(i=>Number(i.value));
+  if(!dias.length) return toast('Marque pelo menos um dia de atendimento','error');
+  const ini = document.getElementById('bIni').value, fim = document.getElementById('bFim').value;
+  if(ini && fim && toMin(fim) <= toMin(ini)) return toast('O horário final precisa ser depois do inicial','error');
+  const data = {nome, especialidade: document.getElementById('bEsp').value.trim(),
+    especialidade_en: document.getElementById('bEspEn').value.trim(),
+    bio: document.getElementById('bBio').value.trim(), bio_en: document.getElementById('bBioEn').value.trim(),
+    foto: adminState.barberFoto||'', dias, inicio: ini, fim, ativo:true};
+  try{
+    if(id) await db.collection('barbeiros').doc(id).update(data);
+    else await db.collection('barbeiros').add({...data, ordem: adminState.barbers.length});
+    await carregarBarbeirosAdmin();
+    closeModal('barber'); renderBarbersAdmin(); fillNaBarber();
+    toast('Barbeiro salvo!','success');
+  }catch(e){ toast('Erro ao salvar barbeiro: '+e.message,'error'); }
+}
+async function removeBarbeiro(id){
+  if(!confirm('Remover este barbeiro? Agendamentos já feitos continuam no histórico.')) return;
+  try{
+    await db.collection('barbeiros').doc(id).update({ativo:false});
+    adminState.barbers = adminState.barbers.filter(b=>b.id!==id);
+    renderBarbersAdmin(); fillNaBarber(); toast('Barbeiro removido','info');
+  }catch(e){ toast('Erro: '+e.message,'error'); }
+}
+
+// ── GALERIA ───────────────────────────────────────────────────────────────────
+function renderGalleryAdmin(){
+  const g = document.getElementById('galleryAdminGrid'); if(!g) return;
+  g.innerHTML = adminState.gallery.length ? adminState.gallery.map(x=>`
+    <div class="svc-card" style="padding:12px">
+      <img src="${esc(safeImg(x.url))}" alt="" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;margin-bottom:8px">
+      <input class="form-input" value="${esc(x.legenda||'')}" placeholder="Legenda (opcional)" style="font-size:12px;padding:8px"
+        onchange="saveLegenda('${esc(x.id)}',this.value)">
+      <button class="status-btn cancel" onclick="removeGaleria('${esc(x.id)}')" style="font-size:11px;margin-top:8px">🗑 Remover</button>
+    </div>`).join('') : '<p style="color:var(--text3);font-size:14px;padding:30px;text-align:center;grid-column:1/-1">Nenhuma foto ainda.</p>';
+}
+async function uploadGaleria(files){
+  const lista = [...files];
+  if(adminState.gallery.length + lista.length > 30) return toast('Limite de 30 fotos na galeria','error');
+  toast(`Enviando ${lista.length} foto(s)...`,'info');
+  for(const f of lista){
+    try{
+      const url = await comprimirImagem(f, 900, 0.78);
+      await db.collection('galeria').add({url, legenda:'', ativo:true, ordem: Date.now()});
+    }catch(e){ toast('Falha em uma foto: '+e.message,'error'); }
+  }
+  await carregarGaleriaAdmin(); renderGalleryAdmin(); toast('Galeria atualizada!','success');
+}
+async function addGaleriaUrl(){
+  const url = safeUrl(document.getElementById('galUrl').value);
+  if(!url) return toast('Cole um link que comece com https://','error');
+  try{
+    await db.collection('galeria').add({url, legenda:'', ativo:true, ordem: Date.now()});
+    document.getElementById('galUrl').value='';
+    await carregarGaleriaAdmin(); renderGalleryAdmin();
+  }catch(e){ toast('Erro: '+e.message,'error'); }
+}
+async function saveLegenda(id, v){
+  try{ await db.collection('galeria').doc(id).update({legenda:v.trim()}); toast('Legenda salva','success'); }
+  catch(e){ toast('Erro: '+e.message,'error'); }
+}
+async function removeGaleria(id){
+  if(!confirm('Remover esta foto da galeria?')) return;
+  try{ await db.collection('galeria').doc(id).update({ativo:false});
+    adminState.gallery = adminState.gallery.filter(x=>x.id!==id); renderGalleryAdmin(); }
+  catch(e){ toast('Erro: '+e.message,'error'); }
+}
+
+// ── CONTEÚDO DO SITE ──────────────────────────────────────────────────────────
+function renderSiteForm(){
+  const s = adminState.site; if(!s) return;
+  const set = (id,v)=>{ const el=document.getElementById(id); if(el) el.value = v ?? ''; };
+  set('stNome', s.nome); set('stCor', s.cor||'#C9A84C'); set('stSlogan', s.slogan); set('stSloganEn', s.slogan_en);
+  set('stWpp', s.whatsapp); set('stInsta', s.instagram); set('stEnd', s.endereco); set('stMaps', s.mapsUrl);
+  set('stAviso', s.avisoHorario); set('stNotaPrecos', s.notaPrecos);
+  set('stNota', s.googleNota); set('stQtd', s.googleQtd); set('stGLink', s.googleReviewUrl);
+  document.getElementById('stIngles').classList.toggle('on', s.ingles !== false);
+  const lp = document.getElementById('stLogoPrev');
+  lp.src = safeImg(s.logo) || ''; lp.style.display = safeImg(s.logo) ? 'block':'none';
+  renderHorariosForm(); renderDatas(); renderDifs(); renderRevs(); renderPlanos(); renderPosts();
+}
+function setS(path, i, k, v){ adminState.site[path][i][k] = v; }
+
+function renderHorariosForm(){
+  const h = adminState.site.horarios;
+  document.getElementById('stHorarios').innerHTML = [1,2,3,4,5,6,0].map(d=>{
+    const x = h[d] || {aberto:false, abre:'08:00', fecha:'18:00'};
+    return `<div style="border-bottom:1px solid var(--border);padding:10px 0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <strong style="font-size:14px">${DIAS_PT[d]}</strong>
+        <div class="toggle ${x.aberto?'on':''}" onclick="this.classList.toggle('on');adminState.site.horarios[${d}].aberto=this.classList.contains('on')"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+        ${[['abre','Abre'],['fecha','Fecha'],['pausaIni','Pausa de'],['pausaFim','Pausa até']].map(([k,l])=>
+          `<div><div style="font-size:10px;color:var(--text3);margin-bottom:3px">${l}</div>
+           <input class="form-input" type="time" value="${esc(x[k]||'')}" style="padding:8px 6px;font-size:13px"
+             onchange="adminState.site.horarios[${d}].${k}=this.value"></div>`).join('')}
+      </div></div>`;
+  }).join('');
+}
+function addDataFechada(){
+  const v = document.getElementById('stNovaData').value; if(!v) return;
+  const a = adminState.site.datasFechadas; if(!a.includes(v)) a.push(v);
+  a.sort(); document.getElementById('stNovaData').value=''; renderDatas();
+}
+function renderDatas(){
+  const hoje = dateStrLocal();
+  adminState.site.datasFechadas = adminState.site.datasFechadas.filter(d=>d>=hoje); // some as datas passadas
+  document.getElementById('stDatas').innerHTML = adminState.site.datasFechadas.map((d,i)=>
+    `<span class="badge pending" style="cursor:pointer" onclick="adminState.site.datasFechadas.splice(${i},1);renderDatas()">${esc(d.split('-').reverse().join('/'))} ✕</span>`).join('')
+    || '<span style="font-size:12px;color:var(--text3)">Nenhuma data bloqueada.</span>';
+}
+function renderDifs(){
+  document.getElementById('stDifs').innerHTML = adminState.site.diferenciais.map((d,i)=>`
+    <div class="setting-row">
+      <div class="setting-info" style="display:flex;gap:8px;align-items:center;flex:1">
+        <span style="font-size:22px">${esc(d.icon)}</span>
+        <div style="flex:1"><input class="form-input" value="${esc(d.label)}" style="padding:8px;font-size:13px;margin-bottom:4px" oninput="setS('diferenciais',${i},'label',this.value)">
+        <input class="form-input" value="${esc(d.label_en||'')}" placeholder="Inglês (opcional)" style="padding:8px;font-size:12px" oninput="setS('diferenciais',${i},'label_en',this.value)"></div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="toggle ${d.ativo?'on':''}" onclick="this.classList.toggle('on');setS('diferenciais',${i},'ativo',this.classList.contains('on'))"></div>
+        <button class="status-btn cancel" onclick="adminState.site.diferenciais.splice(${i},1);renderDifs()">✕</button>
+      </div>
+    </div>`).join('');
+}
+function addDif(){
+  const label = document.getElementById('stDifLabel').value.trim(); if(!label) return;
+  adminState.site.diferenciais.push({icon: document.getElementById('stDifIcon').value.trim()||'✨', label, label_en:'', ativo:true});
+  document.getElementById('stDifLabel').value=''; document.getElementById('stDifIcon').value=''; renderDifs();
+}
+function renderRevs(){
+  document.getElementById('stRevs').innerHTML = adminState.site.avaliacoes.map((r,i)=>`
+    <div style="border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px">
+      <div class="form-row">
+        <input class="form-input" value="${esc(r.autor||'')}" placeholder="Nome do cliente" oninput="setS('avaliacoes',${i},'autor',this.value)">
+        <select class="form-input" onchange="setS('avaliacoes',${i},'nota',Number(this.value))">
+          ${[5,4,3].map(n=>`<option value="${n}" ${Number(r.nota)===n?'selected':''}>${'★'.repeat(n)}</option>`).join('')}
+        </select>
+      </div>
+      <input class="form-input" value="${esc(r.barbeiro||'')}" placeholder="Barbeiro citado (opcional)" style="margin-top:8px" oninput="setS('avaliacoes',${i},'barbeiro',this.value)">
+      <textarea class="form-input" rows="3" placeholder="Texto da avaliação" style="margin-top:8px" oninput="setS('avaliacoes',${i},'texto',this.value)">${esc(r.texto||'')}</textarea>
+      <button class="status-btn cancel" onclick="adminState.site.avaliacoes.splice(${i},1);renderRevs()" style="margin-top:8px">🗑 Remover</button>
+    </div>`).join('');
+}
+function addRev(){ adminState.site.avaliacoes.push({autor:'', nota:5, texto:'', barbeiro:''}); renderRevs(); }
+function renderPlanos(){
+  document.getElementById('stPlanos').innerHTML = adminState.site.planos.map((p,i)=>`
+    <div style="border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px">
+      <div class="form-row">
+        <input class="form-input" value="${esc(p.nome||'')}" placeholder="Nome do plano (ex: Clube Corte Ilimitado)" oninput="setS('planos',${i},'nome',this.value)">
+        <input class="form-input" type="number" value="${esc(p.preco??'')}" placeholder="Preço mensal (R$)" oninput="setS('planos',${i},'preco',parseFloat(this.value)||0)">
+      </div>
+      <input class="form-input" value="${esc(p.desc||'')}" placeholder="Descrição curta" style="margin-top:8px" oninput="setS('planos',${i},'desc',this.value)">
+      <textarea class="form-input" rows="3" placeholder="O que inclui (um item por linha)" style="margin-top:8px" oninput="adminState.site.planos[${i}].inclui=linhas(this.value)">${esc((p.inclui||[]).join('\n'))}</textarea>
+      <div class="form-row" style="margin-top:8px">
+        <input class="form-input" value="${esc(p.nome_en||'')}" placeholder="Nome em inglês (opcional)" oninput="setS('planos',${i},'nome_en',this.value)">
+        <input class="form-input" value="${esc(p.desc_en||'')}" placeholder="Descrição em inglês (opcional)" oninput="setS('planos',${i},'desc_en',this.value)">
+      </div>
+      <textarea class="form-input" rows="2" placeholder="Itens em inglês (um por linha, opcional)" style="margin-top:8px" oninput="adminState.site.planos[${i}].inclui_en=linhas(this.value)">${esc((p.inclui_en||[]).join('\n'))}</textarea>
+      <button class="status-btn cancel" onclick="adminState.site.planos.splice(${i},1);renderPlanos()" style="margin-top:8px">🗑 Remover plano</button>
+    </div>`).join('');
+}
+function addPlano(){ adminState.site.planos.push({nome:'', preco:0, desc:'', inclui:[]}); renderPlanos(); }
+function renderPosts(){
+  document.getElementById('stPosts').innerHTML = adminState.site.instaPosts.map((u,i)=>`
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <input class="form-input" value="${esc(u)}" placeholder="https://www.instagram.com/p/..." oninput="adminState.site.instaPosts[${i}]=this.value">
+      <button class="status-btn cancel" onclick="adminState.site.instaPosts.splice(${i},1);renderPosts()">✕</button>
+    </div>`).join('');
+}
+function addPost(){ if(adminState.site.instaPosts.length>=6) return toast('Máximo de 6 posts','error'); adminState.site.instaPosts.push(''); renderPosts(); }
+
+async function uploadLogo(file){
+  if(!file) return;
+  try{
+    adminState.site.logo = await comprimirImagem(file, 320, 0.85);
+    const lp = document.getElementById('stLogoPrev'); lp.src = adminState.site.logo; lp.style.display='block';
+  }catch(e){ toast(e.message,'error'); }
+}
+function removerLogo(){ adminState.site.logo=''; document.getElementById('stLogoPrev').style.display='none'; }
+
+async function saveSite(){
+  const s = adminState.site; const v = id => document.getElementById(id).value.trim();
+  s.nome = v('stNome'); s.cor = document.getElementById('stCor').value; s.slogan = v('stSlogan'); s.slogan_en = v('stSloganEn');
+  s.ingles = document.getElementById('stIngles').classList.contains('on');
+  s.whatsapp = v('stWpp').replace(/\D/g,''); s.instagram = instaHandle(v('stInsta'));
+  s.endereco = v('stEnd'); s.avisoHorario = v('stAviso'); s.notaPrecos = v('stNotaPrecos');
+  s.mapsUrl = safeUrl(v('stMaps')); s.googleReviewUrl = safeUrl(v('stGLink'));
+  s.googleNota = v('stNota'); s.googleQtd = v('stQtd');
+  if(v('stMaps') && !s.mapsUrl) return toast('O link do Maps precisa começar com https://','error');
+  if(v('stGLink') && !s.googleReviewUrl) return toast('O link do Google precisa começar com https://','error');
+  if(v('stInsta') && !s.instagram) return toast('Instagram inválido. Use só o @usuario','error');
+  s.avaliacoes = s.avaliacoes.filter(r=>r.texto && r.texto.trim());
+  s.planos = s.planos.filter(p=>p.nome && p.nome.trim());
+  s.instaPosts = s.instaPosts.map(u=>u.trim()).filter(u=>instaPostCode(u));
+  try{
+    await db.collection('config').doc('site').set(s);
+    // mantém o número usado nas confirmações em sincronia com o botão de WhatsApp
+    if(s.whatsapp) await db.collection('config').doc('geral').set({adminPhone: s.whatsapp}, {merge:true});
+    renderSiteForm();
+    toast('Site atualizado! Já está valendo para os clientes.','success');
+  }catch(e){ toast('Erro ao salvar: '+e.message,'error'); }
+}
+
+// ── AGENDAMENTO MANUAL COM BARBEIRO ───────────────────────────────────────────
+function fillNaBarber(){
+  const wrap = document.getElementById('naBarberWrap'); if(!wrap) return;
+  wrap.style.display = adminState.barbers.length ? '' : 'none';
+  document.getElementById('naBarber').innerHTML = '<option value="">Selecionar barbeiro</option>' +
+    adminState.barbers.map(b=>`<option value="${esc(b.id)}">${esc(b.nome)}</option>`).join('');
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────

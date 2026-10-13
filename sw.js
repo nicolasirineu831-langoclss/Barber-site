@@ -1,7 +1,7 @@
 // Service worker mínimo — necessário pra o site ser reconhecido como app instalável (PWA)
 // e pra gerar o APK depois no PWABuilder. Não faz cache agressivo pra sempre pegar dados
 // atualizados do Firebase (agendamentos, serviços, etc. têm que vir sempre em tempo real).
-const CACHE_NAME = 'barberpro-shell-v1';
+const CACHE_NAME = 'barberpro-shell-v2';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
