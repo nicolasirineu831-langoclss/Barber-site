@@ -19,10 +19,17 @@
     else msgs.push('ERRO: '+e.message+' ('+String(e.filename||'').split('/').pop()+':'+e.lineno+')');
     show();
   },true);
+  var _ce=console.error; console.error=function(){ try{ msgs.push('console.error: '+Array.prototype.slice.call(arguments).map(function(x){return (x&&x.message)||String(x);}).join(' ').slice(0,160)); show(); }catch(e){} return _ce.apply(console,arguments); };
   window.addEventListener('unhandledrejection',function(e){ msgs.push('PROMESSA: '+((e.reason&&e.reason.message)||e.reason)); show(); });
   window.addEventListener('load',function(){
     msgs.push('firebase: '+typeof firebase+' | auth: '+typeof auth+' | db: '+typeof db+' | navegador: '+navigator.userAgent.slice(0,90));
+    msgs.push('AppCheck: '+(window.APPCHECK_PULADO?'PULADO (teste)':(window.APPCHECK_ERRO?'ERRO '+window.APPCHECK_ERRO:'ativado sem erro')));
     show();
+    [['identitytoolkit','https://identitytoolkit.googleapis.com/'],['firestore','https://firestore.googleapis.com/'],['appcheck','https://content-firebaseappcheck.googleapis.com/'],['recaptcha','https://www.google.com/recaptcha/enterprise.js']].forEach(function(h){
+      var t0=Date.now(), ctl=('AbortController' in window)?new AbortController():null, to=setTimeout(function(){ if(ctl) ctl.abort(); },8000);
+      fetch(h[1],{mode:'no-cors',signal:ctl&&ctl.signal}).then(function(){ msgs.push('REDE '+h[0]+': OK ('+(Date.now()-t0)+'ms)'); show(); })
+        .catch(function(e){ msgs.push('REDE '+h[0]+': FALHOU ('+(Date.now()-t0)+'ms) '+(e&&e.name||'')); show(); }).finally(function(){ clearTimeout(to); });
+    });
   });
 })();
 </script>
@@ -803,6 +810,7 @@ footer{
           <input class="form-input" type="password" id="loginPassword" placeholder="••••••••">
         </div>
         <button class="btn-submit" onclick="doLogin()" data-i18n="signIn">Entrar</button>
+        <p style="text-align:center;margin-top:14px;font-size:13px"><span class="form-link" onclick="esqueciSenha()" data-i18n="forgot">Esqueci minha senha</span></p>
         <p style="text-align:center;margin-top:16px;font-size:13px;color:var(--text2)">
           <span data-i18n="noAccount">Não tem conta?</span> <span class="form-link" onclick="switchTab('register')" data-i18n="signUpLink">Cadastre-se</span>
         </p>
@@ -982,7 +990,7 @@ pt:{
   minutes:'minutos', min:'min', noTimes:'Sem horários livres nesse dia.', pickDay:'Escolha um dia no calendário.',
   service:'Serviço', barber:'Barbeiro', date:'Data', time:'Horário', duration:'Duração', client:'Cliente', total:'Total',
   noAppts:'Nenhum agendamento ainda.', pending:'⏳ Pendente', confirmed:'✅ Confirmado', done:'✔ Concluído',
-  tFillPass:'Preencha e-mail e senha', tBadLogin:'E-mail ou senha inválidos', tWelcome:'Bem-vindo,',
+  tFillPass:'Preencha e-mail e senha', forgot:'Esqueci minha senha', tTypeEmail:'Digite seu e-mail no campo acima e toque em "Esqueci minha senha" de novo.', tResetSent:'Enviamos um link para redefinir a senha. Confira seu e-mail (e a caixa de spam).', tResetErr:'Não foi possível enviar o e-mail de redefinição.', tBadLogin:'E-mail ou senha inválidos', tWelcome:'Bem-vindo,',
   tFillAll:'Preencha todos os campos', tPass6:'A senha precisa ter pelo menos 6 caracteres',
   tAccCreated:'Conta criada! Bem-vindo,', tEmailUsed:'E-mail já cadastrado', tCantCreate:'Não foi possível criar a conta:',
   tLoggedOut:'Você saiu da conta', tPickDate:'Selecione data e horário', tNameWpp:'Preencha nome e WhatsApp',
@@ -1031,7 +1039,7 @@ en:{
   minutes:'minutes', min:'min', noTimes:'No free times on this day.', pickDay:'Pick a day on the calendar.',
   service:'Service', barber:'Barber', date:'Date', time:'Time', duration:'Duration', client:'Customer', total:'Total',
   noAppts:'No bookings yet.', pending:'⏳ Pending', confirmed:'✅ Confirmed', done:'✔ Done',
-  tFillPass:'Enter e-mail and password', tBadLogin:'Invalid e-mail or password', tWelcome:'Welcome,',
+  tFillPass:'Enter e-mail and password', forgot:'Forgot my password', tTypeEmail:'Type your e-mail above and tap "Forgot my password" again.', tResetSent:'We sent you a link to reset your password. Check your e-mail (and spam folder).', tResetErr:'Could not send the reset e-mail.', tBadLogin:'Invalid e-mail or password', tWelcome:'Welcome,',
   tFillAll:'Please fill in all fields', tPass6:'Password must be at least 6 characters',
   tAccCreated:'Account created! Welcome,', tEmailUsed:'E-mail already registered', tCantCreate:'Could not create account:',
   tLoggedOut:'You have signed out', tPickDate:'Select a date and time', tNameWpp:'Enter your name and WhatsApp',
@@ -1739,6 +1747,22 @@ function vigiaRede(){
 function comVigia(fn){ return async function(...a){ const fim = vigiaRede(); try{ return await fn.apply(this,a); } finally{ fim(); } }; }
 const doLogin = comVigia(_doLogin);
 const doRegister = comVigia(_doRegister);
+
+
+// Redefinição de senha: o Firebase envia um e-mail com o link para criar uma senha nova
+async function esqueciSenha(){
+  const email = document.getElementById('loginEmail').value.trim();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return toast(t('tTypeEmail'), 'error');
+  try{
+    auth.languageCode = lang==='en' ? 'en' : 'pt-BR';
+    await auth.sendPasswordResetEmail(email);
+    toast(t('tResetSent'), 'success');
+  }catch(e){
+    // por segurança o Firebase pode não dizer se o e-mail existe; só avisamos erros reais
+    if(e.code==='auth/user-not-found') toast(t('tResetSent'), 'success');
+    else toast(t('tResetErr')+' ['+(e.code||e.message)+']', 'error');
+  }
+}
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function initApp(){
