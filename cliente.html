@@ -588,6 +588,7 @@ footer{
   .modal-overlay{align-items:flex-end;padding:0}
 }
 </style>
+<link rel="stylesheet" href="cliente-premium.css">
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore-compat.js"></script>
@@ -610,7 +611,8 @@ footer{
   <div class="nav-links">
     <button class="lang-btn" id="langBtn" onclick="toggleLang()" title="Language / Idioma" style="display:none">EN</button>
     <button class="theme-toggle" onclick="toggleTheme()" title="Tema / Theme">☀</button>
-    <button class="nav-btn ghost" onclick="openModal('auth')" data-i18n="signIn">Entrar</button>
+    <button class="nav-btn ghost" id="navSignIn" onclick="openModal('auth')" data-i18n="signIn">Entrar</button>
+    <button class="nav-user" id="navUser" onclick="irParaPerfil()" style="display:none" aria-label="Meu perfil"><span id="navAvatar">U</span><b id="navUserName"></b></button>
     <button class="nav-btn primary" onclick="openBooking()">✂ <span data-i18n="book">Agendar</span></button>
   </div>
 </nav>
@@ -627,6 +629,8 @@ footer{
     <button class="btn-lg btn-outline" onclick="openModal('auth')">👤 <span data-i18n="myAccount">Minha Conta</span></button>
   </div>
   <div id="heroOpen"></div>
+  <div class="hero-facts" id="heroFacts"></div>
+  <div class="pole pole-hero" aria-hidden="true"></div>
 </section>
 
 <!-- SERVICES -->
@@ -638,6 +642,11 @@ footer{
     <div class="services-grid" id="servicesGrid"></div>
     <p class="price-note" id="priceNote" style="display:none"></p>
   </div>
+</section>
+
+<!-- DONO -->
+<section class="section" id="dono" style="display:none">
+  <div class="section-inner" id="donoInner"></div>
 </section>
 
 <!-- BARBERS -->
@@ -742,19 +751,52 @@ footer{
 <!-- USER PROFILE -->
 <section class="section" id="myAccount" style="display:none">
   <div class="section-inner">
-    <div class="section-label" data-i18n="accLabel">Minha Conta</div>
-    <h2 class="section-title" data-i18n="accTitle">Meus Agendamentos</h2>
-    <div class="profile-section visible" id="profileSection">
-      <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
-        <div class="profile-avatar" id="avatarInitial">U</div>
-        <div>
-          <div style="font-size:18px;font-weight:600" id="profileName">—</div>
-          <div style="font-size:13px;color:var(--text2)" id="profileEmail">—</div>
+    <article class="perfil">
+      <div class="perfil-capa" aria-hidden="true"><div class="pole"></div></div>
+      <div class="perfil-head">
+        <div class="perfil-avatar-wrap">
+          <div class="perfil-avatar" id="pfAvatar">U</div>
+          <label class="perfil-cam" title="Trocar foto" aria-label="Trocar foto">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <input type="file" accept="image/*" hidden onchange="pfTrocarFoto(this.files[0]);this.value=''">
+          </label>
         </div>
-        <button onclick="logout()" style="margin-left:auto" class="nav-btn ghost" data-i18n="logout">Sair</button>
+        <div class="perfil-id">
+          <h2 id="pfNome">—</h2>
+          <p id="pfSub"></p>
+          <div class="perfil-tier" id="pfTier"></div>
+        </div>
+        <div class="perfil-acoes">
+          <button class="btn-sm gold" onclick="openBooking()" data-i18n="pfBookNow">Novo agendamento</button>
+          <button class="btn-sm" onclick="logout()" data-i18n="logout">Sair</button>
+        </div>
       </div>
-      <div id="myAppointments" class="appointments-list"></div>
-    </div>
+      <div class="perfil-stats" id="pfStats"></div>
+      <div class="perfil-tabs" role="tablist">
+        <button class="perfil-tab active" id="pfTabBtnAgenda" role="tab" onclick="pfAba('agenda')" data-i18n="pfTabAppts">Agendamentos</button>
+        <button class="perfil-tab" id="pfTabBtnDados" role="tab" onclick="pfAba('dados')" data-i18n="pfTabData">Meus dados</button>
+      </div>
+      <div class="perfil-painel" id="pfPainelAgenda">
+        <div id="myAppointments"></div>
+      </div>
+      <div class="perfil-painel" id="pfPainelDados" style="display:none">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label" data-i18n="fullName">Nome completo</label><input class="form-input" id="pfName" autocomplete="name"></div>
+          <div class="form-group"><label class="form-label">WhatsApp</label><input class="form-input" id="pfPhone" inputmode="tel" autocomplete="tel" placeholder="(91) 99999-9999"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label" data-i18n="birth">Data de Nascimento</label><input class="form-input" type="date" id="pfBirth"></div>
+          <div class="form-group" id="pfFavWrap"><label class="form-label" data-i18n="pfFavBarber">Barbeiro preferido</label><select class="form-input form-select" id="pfFav"></select></div>
+        </div>
+        <div class="form-group"><label class="form-label" data-i18n="pfPrefs">Preferências do corte</label>
+          <textarea class="form-input" id="pfPrefs" rows="3" maxlength="280" data-i18n-ph="pfPrefsPh" placeholder="Ex: degradê baixo, máquina 2 nas laterais, barba alinhada"></textarea>
+          <div class="form-hint" data-i18n="pfPrefsHint">Seu barbeiro vê isso quando você agenda.</div></div>
+        <div class="perfil-btns">
+          <button class="btn-submit" onclick="pfSalvar()" data-i18n="pfSave">Salvar alterações</button>
+          <button class="btn-sm" onclick="pfTrocarSenha()" data-i18n="pfChangePass">Redefinir senha por e-mail</button>
+        </div>
+      </div>
+    </article>
   </div>
 </section>
 
@@ -1086,6 +1128,9 @@ async function carregarServicos(){
     const snap = await db.collection('servicos').where('ativo','==',true).get();
     SERVICES = snap.docs.map(d=>({id:d.id, ...d.data()})).sort((a,b)=>(a.ordem??0)-(b.ordem??0));
   }catch(e){ console.error('Erro ao carregar serviços:', e); SERVICES = []; }
+  // Se o dono ainda não cadastrou nenhum serviço (ou o banco não respondeu), mostra os de exemplo
+  // em vez de deixar a lista vazia. O dono troca pelos reais em Painel → Serviços.
+  if(!SERVICES.length) SERVICES = SERVICOS_PADRAO.map((s,i)=>({...s, id:'padrao-'+i, ordem:i}));
 }
 async function carregarConfig(){
   try{
@@ -1183,6 +1228,7 @@ function whatsappLink(msg){ return `https://wa.me/${whatsappNumero()}?text=${enc
 function renderTudo(){
   renderServices(); renderBarbers(); renderAmbiente(); renderGaleria(); renderInstagram();
   renderAvaliacoes(); renderPlanos(); renderLocalizacao(); renderAberto();
+  if(typeof renderDono==='function'){ renderDono(); renderHeroFacts(); }
   document.getElementById('wppFloat').href = whatsappLink(t('wppHello'));
 }
 
@@ -1191,15 +1237,18 @@ function renderServices(){
   grid.innerHTML = SERVICES.map(s => {
     const inc = (lang==='en' && Array.isArray(s.inclui_en) && s.inclui_en.length) ? s.inclui_en : (s.inclui||[]);
     return `
-    <div class="service-card" onclick="openBookingWithService('${esc(s.id)}')">
-      <div class="service-icon">${esc(s.icon)}</div>
+    <div class="service-card" role="button" tabindex="0" onclick="openBookingWithService('${esc(s.id)}')" onkeydown="if(event.key==='Enter')this.click()">
+      <div class="service-top">
+        <div class="service-icon">${esc(s.icon)}</div>
+        <div class="service-price">R$ ${fmtPreco(s.price)}</div>
+      </div>
       <div class="service-name">${esc(L(s,'name'))}</div>
       <div class="service-desc">${esc(L(s,'desc'))}</div>
-      <div class="service-foot">
-        <div class="service-price">R$ ${fmtPreco(s.price)}</div>
-        <div class="service-dur">⏱ ${esc(s.dur)} ${t('minutes')}</div>
-      </div>
       ${inc.length ? `<ul class="service-incl">${inc.map(i=>`<li>${esc(i)}</li>`).join('')}</ul>` : ''}
+      <div class="service-foot">
+        <div class="service-dur">⏱ ${esc(s.dur)} ${t('minutes')}</div>
+        <span class="service-go">${t('book')}</span>
+      </div>
     </div>`;
   }).join('');
   const note = lang==='en' ? (SITE.notaPrecos_en || SITE.notaPrecos) : SITE.notaPrecos;
@@ -1435,7 +1484,7 @@ async function _doRegister(){
   if(pass.length < 6) return toast(t('tPass6'), 'error');
   try{
     const cred = await auth.createUserWithEmailAndPassword(email, pass);
-    const perfil = {name, email, phone, createdAt: new Date().toISOString()};
+    const perfil = {name, email, phone, birth: (document.getElementById('regBirth')||{}).value||'', createdAt: new Date().toISOString()};
     await db.collection('clientes').doc(cred.user.uid).set(perfil);
     state.user = {uid: cred.user.uid, ...perfil};
     closeModal('auth'); updateProfile();
@@ -1449,36 +1498,10 @@ function logout(){
   auth.signOut(); state.user = null;
   if(unsubscribeMinhaAgenda) unsubscribeMinhaAgenda();
   state.myBookings = [];
-  document.getElementById('myAccount').style.display = 'none';
+  if(typeof limparPerfilUI==='function') limparPerfilUI();
   toast(t('tLoggedOut'), 'info');
 }
-function updateProfile(){
-  if(!state.user) return;
-  document.getElementById('myAccount').style.display = 'block';
-  document.getElementById('avatarInitial').textContent = (state.user.name||'U').charAt(0).toUpperCase();
-  document.getElementById('profileName').textContent = state.user.name;
-  document.getElementById('profileEmail').textContent = state.user.email;
-  ouvirMeusAgendamentos();
-}
-function renderMyAppointments(){
-  const list = document.getElementById('myAppointments');
-  if(!list) return;
-  const mine = state.myBookings || [];
-  if(!mine.length){
-    list.innerHTML = `<p style="color:var(--text3);text-align:center;padding:20px">${t('noAppts')}</p>`;
-    return;
-  }
-  const statusMap = {pending:t('pending'), confirmed:t('confirmed'), done:t('done')};
-  const badgeClass = {pending:'pending', confirmed:'confirmed', done:'done'};
-  list.innerHTML = mine.map(b => `
-    <div class="appointment-item">
-      <div class="appointment-info">
-        <div class="appt-service">${esc(b.service)}${b.barber ? ' • ✂ '+esc(b.barber) : ''}</div>
-        <div class="appt-time">📅 ${esc(b.date)} ${t('wppAt')} ${esc(b.time)} • R$ ${esc(fmtPreco(b.price))}</div>
-      </div>
-      <span class="badge ${badgeClass[b.status] || 'pending'}">${statusMap[b.status] || t('pending')}</span>
-    </div>`).join('');
-}
+// updateProfile() e renderMyAppointments() ficam em cliente-perfil.js
 
 // ── BOOKING ───────────────────────────────────────────────────────────────────
 function openBooking(){ initBooking(); openModal('booking'); }
@@ -1491,6 +1514,7 @@ function initBooking(){
   renderBookingStep(1); renderServiceList(); renderBarberPick(); renderCalendar();
   document.getElementById('timeSlots').innerHTML = '';
   atualizaBtnStep2();
+  if(typeof preencherAgendamento==='function') preencherAgendamento();
 }
 function atualizaBtnStep2(){
   document.getElementById('btnStep2').disabled = !(state.selectedService && (!BARBERS.length || state.selectedBarber));
@@ -1786,6 +1810,7 @@ auth.onAuthStateChanged(async (fbUser)=>{
   }
 });
 </script>
+<script src="cliente-perfil.js"></script>
 <script>
   // Registra o service worker para o app funcionar como PWA/APK instalável
   if('serviceWorker' in navigator){

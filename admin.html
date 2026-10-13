@@ -478,6 +478,7 @@ tr:hover td{background:rgba(201,168,76,0.03)}
   .metrics-grid{grid-template-columns:1fr}
 }
 </style>
+<link rel="stylesheet" href="admin-premium.css">
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore-compat.js"></script>
@@ -491,6 +492,16 @@ tr:hover td{background:rgba(201,168,76,0.03)}
 <div id="authScreen">
   <div class="auth-bg"></div>
   <div class="auth-deco">✂</div>
+  <aside class="auth-aside" aria-hidden="false">
+    <div class="auth-aside-brand">✂ BarberPro</div>
+    <h1>Sua barbearia,<br>sob controle.</h1>
+    <ul>
+      <li><b>Agenda ao vivo</b><span>Cada reserva do site chega aqui na hora.</span></li>
+      <li><b>Clientes e histórico</b><span>Quem veio, quanto gastou, quando volta.</span></li>
+      <li><b>Seu perfil profissional</b><span>Foto, bio e especialidades aparecem no site.</span></li>
+    </ul>
+    <div class="pole" aria-hidden="true"></div>
+  </aside>
   <div class="auth-card">
     <div class="auth-logo">
       <div class="auth-logo-icon">✂</div>
@@ -513,6 +524,7 @@ tr:hover td{background:rgba(201,168,76,0.03)}
         <input class="form-input" type="password" id="aLoginPass" placeholder="••••••••">
       </div>
       <button class="btn-primary" onclick="adminLogin()">🔐 Acessar Painel</button>
+      <div id="authNotice" class="auth-notice" style="display:none"></div>
       <p style="text-align:center;margin-top:14px;font-size:13px"><a href="#" onclick="adminEsqueciSenha();return false" style="color:var(--gold);text-decoration:none">Esqueci minha senha</a></p>
     </div>
 
@@ -603,40 +615,46 @@ tr:hover td{background:rgba(201,168,76,0.03)}
         </div>
       </div>
       <nav class="sidebar-nav">
-        <button class="nav-item active" onclick="showPage('dashboard')">
+        <div class="nav-group">Operação</div>
+        <button class="nav-item active" data-page="dashboard" onclick="showPage('dashboard')">
           <span class="nav-item-icon">📊</span> Dashboard
         </button>
-        <button class="nav-item" onclick="showPage('appointments')">
+        <button class="nav-item" data-page="appointments" onclick="showPage('appointments')">
           <span class="nav-item-icon">📅</span> Agendamentos
           <span class="nav-badge" id="pendingBadge">0</span>
         </button>
-        <button class="nav-item" onclick="showPage('calendar')">
+        <button class="nav-item" data-page="calendar" onclick="showPage('calendar')">
           <span class="nav-item-icon">🗓</span> Calendário
         </button>
-        <button class="nav-item" onclick="showPage('clients')">
+        <button class="nav-item" data-page="clients" onclick="showPage('clients')">
           <span class="nav-item-icon">👥</span> Clientes
         </button>
-        <button class="nav-item" onclick="showPage('services')">
+        <div class="nav-group">Catálogo e site</div>
+        <button class="nav-item" data-page="services" onclick="showPage('services')">
           <span class="nav-item-icon">✂</span> Serviços
         </button>
-        <button class="nav-item" onclick="showPage('barbers')">
+        <button class="nav-item" data-page="barbers" onclick="showPage('barbers')">
           <span class="nav-item-icon">🧔</span> Barbeiros
         </button>
-        <button class="nav-item" onclick="showPage('gallery')">
+        <button class="nav-item" data-page="gallery" onclick="showPage('gallery')">
           <span class="nav-item-icon">🖼</span> Galeria
         </button>
-        <button class="nav-item" onclick="showPage('site')">
+        <button class="nav-item" data-page="site" onclick="showPage('site')">
           <span class="nav-item-icon">🌐</span> Site e Conteúdo
         </button>
-        <button class="nav-item" onclick="showPage('history')">
+        <div class="nav-group">Conta</div>
+        <button class="nav-item" data-page="profile" onclick="showPage('profile')">
+          <span class="nav-item-icon">👤</span> Meu Perfil
+        </button>
+        <button class="nav-item" data-page="history" onclick="showPage('history')">
           <span class="nav-item-icon">📋</span> Histórico
         </button>
-        <button class="nav-item" onclick="showPage('settings')">
+        <button class="nav-item" data-page="settings" onclick="showPage('settings')">
           <span class="nav-item-icon">⚙️</span> Configurações
         </button>
       </nav>
       <div class="sidebar-footer">
-        <div class="admin-info">
+        <div class="admin-info" onclick="showPage('profile')" role="button" tabindex="0" title="Abrir meu perfil">
           <div class="admin-avatar" id="adminAvatarSide">A</div>
           <div>
             <div class="admin-name" id="adminNameSide">Admin</div>
@@ -660,6 +678,7 @@ tr:hover td{background:rgba(201,168,76,0.03)}
           <button class="icon-btn" onclick="toggleTheme()" title="Tema">☀</button>
           <button class="icon-btn" onclick="toggleNotif()" title="Notificações">🔔</button>
           <button class="icon-btn" onclick="showPage('appointments')" title="Novo agendamento">+</button>
+          <button class="top-avatar" id="topAvatar" onclick="showPage('profile')" title="Meu perfil" aria-label="Meu perfil">A</button>
         </div>
       </div>
 
@@ -667,6 +686,7 @@ tr:hover td{background:rgba(201,168,76,0.03)}
 
         <!-- ── DASHBOARD ── -->
         <div class="page active" id="dashboardPage">
+          <div class="hello" id="dashHello"></div>
           <div class="metrics-grid">
             <div class="metric-card" style="--m-color:var(--gold)">
               <div class="metric-label">Hoje</div>
@@ -917,6 +937,84 @@ tr:hover td{background:rgba(201,168,76,0.03)}
           </div>
         </div>
 
+
+        <!-- ── PROFILE ── -->
+        <div class="page" id="profilePage">
+          <section class="pfa-hero">
+            <div class="pfa-capa" id="pfaCapa">
+              <label class="pfa-capa-btn">📷 Trocar capa
+                <input type="file" accept="image/*" hidden onchange="pfaUploadCapa(this.files[0]);this.value=''"></label>
+            </div>
+            <div class="pfa-hero-body">
+              <div class="pfa-avatar-wrap">
+                <div class="pfa-avatar" id="pfaAvatar">A</div>
+                <label class="pfa-cam" title="Trocar foto" aria-label="Trocar foto">📷
+                  <input type="file" accept="image/*" hidden onchange="pfaUploadFoto(this.files[0]);this.value=''"></label>
+              </div>
+              <div class="pfa-ident">
+                <h2 id="pfaNome">—</h2>
+                <p id="pfaCargoTxt"></p>
+                <div class="pfa-badges" id="pfaBadges"></div>
+              </div>
+              <button class="btn-primary pfa-save" onclick="pfaSalvar()">💾 Salvar perfil</button>
+            </div>
+            <div class="pfa-stats" id="pfaStats"></div>
+          </section>
+
+          <div class="pfa-grid">
+            <div class="settings-section">
+              <div class="settings-title">🧔 Perfil profissional</div>
+              <p class="pfa-help">Estas informações formam o cartão "Conheça o dono" no site dos clientes.</p>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Nome de exibição</label><input class="form-input" id="pfaName" maxlength="60" placeholder="Seu nome"></div>
+                <div class="form-group"><label class="form-label">Cargo</label><input class="form-input" id="pfaCargo" maxlength="60" placeholder="Ex: Fundador e barbeiro-chefe"></div>
+              </div>
+              <div class="form-group"><label class="form-label">Sua história (bio)</label>
+                <textarea class="form-input" id="pfaBio" rows="5" maxlength="600" placeholder="Conte em poucas linhas como começou, seu estilo de trabalho e o que o cliente pode esperar."></textarea>
+                <div class="pfa-count"><span id="pfaBioCount">0</span>/600</div></div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Anos de experiência</label><input class="form-input" type="number" min="0" max="80" id="pfaAnos" placeholder="10"></div>
+                <div class="form-group"><label class="form-label">Instagram</label><input class="form-input" id="pfaInsta" placeholder="@seuusuario"></div>
+              </div>
+              <div class="form-group"><label class="form-label">Especialidades (Enter para adicionar)</label>
+                <div class="pfa-chips" id="pfaChips"></div>
+                <input class="form-input" id="pfaEspIn" maxlength="30" placeholder="Ex: Degradê, Barba na navalha, Pigmentação">
+              </div>
+              <details class="pfa-en"><summary>🇺🇸 Versão em inglês (opcional)</summary>
+                <div class="form-group" style="margin-top:10px"><label class="form-label">Cargo</label><input class="form-input" id="pfaCargoEn" maxlength="60"></div>
+                <div class="form-group"><label class="form-label">Bio</label><textarea class="form-input" id="pfaBioEn" rows="3" maxlength="600"></textarea></div>
+              </details>
+              <div class="setting-row">
+                <div class="setting-info"><div class="setting-label">Mostrar no site</div><div class="setting-desc">Exibe o cartão "Conheça o dono" para os clientes</div></div>
+                <div class="toggle on" id="pfaVisivel" onclick="this.classList.toggle('on')"></div>
+              </div>
+            </div>
+
+            <div class="settings-section">
+              <div class="settings-title">🏪 Contato e empresa</div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Nome da empresa</label><input class="form-input" id="pfaBiz" maxlength="80"></div>
+                <div class="form-group"><label class="form-label">WhatsApp</label><input class="form-input" id="pfaPhone" inputmode="tel" placeholder="(91) 99999-9999"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Cidade</label><input class="form-input" id="pfaCity" maxlength="60"></div>
+                <div class="form-group"><label class="form-label">E-mail de acesso</label><input class="form-input" id="pfaEmail" disabled></div>
+              </div>
+              <div class="form-group"><label class="form-label">Endereço</label><input class="form-input" id="pfaAddr" maxlength="140"></div>
+            </div>
+
+            <div class="settings-section">
+              <div class="settings-title">🔒 Segurança</div>
+              <p class="pfa-help">Por segurança, informe a senha atual para trocar por uma nova.</p>
+              <div class="form-row">
+                <div class="form-group"><label class="form-label">Senha atual</label><input class="form-input" type="password" id="pfaPassOld" autocomplete="current-password"></div>
+                <div class="form-group"><label class="form-label">Nova senha</label><input class="form-input" type="password" id="pfaPassNew" autocomplete="new-password" placeholder="Mín. 6 caracteres"></div>
+              </div>
+              <button class="status-btn confirm" style="padding:11px 18px;font-size:13px" onclick="pfaTrocarSenha()">Alterar senha</button>
+            </div>
+          </div>
+        </div>
+
         <!-- ── SETTINGS ── -->
         <div class="page" id="settingsPage">
           <div class="settings-section">
@@ -1098,14 +1196,7 @@ tr:hover td{background:rgba(201,168,76,0.03)}
 const HOURS = ['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30',
                '13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30'];
 
-const DEFAULT_SERVICES = [
-  {name:'Corte Masculino', desc:'Tesoura ou máquina com acabamento', price:45, dur:45, icon:'✂'},
-  {name:'Barba Completa', desc:'Navalha, toalha quente e hidratação', price:35, dur:30, icon:'🪒'},
-  {name:'Corte + Barba', desc:'Combo completo cabelo e barba', price:70, dur:70, icon:'💈'},
-  {name:'Progressiva', desc:'Alisamento com escova e produto premium', price:120, dur:120, icon:'💁'},
-  {name:'Coloração', desc:'Pintura completa com finalização', price:90, dur:90, icon:'🎨'},
-  {name:'Hidratação', desc:'Tratamento profundo com máscara', price:60, dur:60, icon:'✨'},
-];
+const DEFAULT_SERVICES = SERVICOS_PADRAO; // definido em shared.js
 
 let adminState = {
   theme: 'dark',
@@ -1119,18 +1210,19 @@ let adminState = {
 
 // ── FIRESTORE: DADOS ──────────────────────────────────────────────────────────
 async function carregarAdminServicos(){
-  const snap = await db.collection('servicos').where('ativo','==',true).get();
+  let snap = await db.collection('servicos').get();
   if(snap.empty){
+    // 1ª vez: grava os serviços de exemplo (o dono edita depois)
     const batch = db.batch();
-    DEFAULT_SERVICES.forEach(s=>{
-      const ref = db.collection('servicos').doc();
-      batch.set(ref, {...s, ativo:true, ordem: DEFAULT_SERVICES.indexOf(s)});
+    DEFAULT_SERVICES.forEach((s,i)=>{
+      batch.set(db.collection('servicos').doc(), {...s, ativo:true, ordem:i});
     });
     await batch.commit();
-    return carregarAdminServicos();
+    snap = await db.collection('servicos').get();
   }
   adminState.adminServices = snap.docs
     .map(d=>({id:d.id, ...d.data()}))
+    .filter(s=>s.ativo!==false)
     .sort((a,b)=>(a.ordem??0)-(b.ordem??0));
 }
 let unsubscribeAgendamentos = null;
@@ -1145,6 +1237,7 @@ function ouvirAgendamentosAdmin(){
     renderHistory();
     updatePendingBadge();
     renderNotifications();
+    if(typeof renderPerfilStatsAdmin==='function') renderPerfilStatsAdmin();
   });
 }
 
@@ -1191,21 +1284,74 @@ function switchAuthTab(tab){
   document.getElementById('aLoginForm').style.display = tab==='login' ? 'block' : 'none';
   document.getElementById('aRegisterForm').style.display = tab==='register' ? 'block' : 'none';
 }
+// Mensagem clara para cada erro do Firebase (antes tudo virava "Credenciais inválidas")
+function msgErroAuth(e){
+  const c = (e && e.code) || '';
+  if(['auth/invalid-credential','auth/wrong-password','auth/user-not-found','auth/invalid-login-credentials'].includes(c))
+    return 'E-mail ou senha incorretos. Confira os dados. Se ainda não criou a conta, use a aba "Cadastrar Empresa". Se esqueceu a senha, toque em "Esqueci minha senha".';
+  if(c==='auth/invalid-email') return 'Esse e-mail não parece válido.';
+  if(c==='auth/too-many-requests') return 'Muitas tentativas seguidas. Aguarde alguns minutos ou redefina a senha.';
+  if(c==='auth/network-request-failed') return 'Sem conexão com o servidor. Verifique a internet e tente de novo.';
+  if(c==='auth/user-disabled') return 'Essa conta foi desativada.';
+  if(c==='permission-denied' || c==='firestore/permission-denied') return 'O banco de dados recusou o acesso (regras do Firestore). Veja o arquivo firestore.rules do projeto.';
+  return 'Não foi possível entrar ['+(c||(e&&e.message)||'erro')+']';
+}
+function mostrarAviso(html){
+  const el = document.getElementById('authNotice'); if(!el) return;
+  el.innerHTML = html; el.style.display = html ? 'block' : 'none';
+}
+function copiarTexto(txt){
+  try{ navigator.clipboard.writeText(txt); toast('Copiado!','success'); }catch(e){ toast('Copie manualmente: '+txt,'info'); }
+}
+// Garante que o usuário logado tenha o documento em "admins".
+// Resolve o caso "criei a conta mas diz que não sou administrador".
+async function garantirAdmin(user){
+  const ref = db.collection('admins').doc(user.uid);
+  let doc = await ref.get();
+  if(doc.exists) return doc.data();
+  // Conta existe no Firebase Auth, mas sem ficha de proprietário. Ainda não há dono cadastrado?
+  let setupDone = false;
+  try{ const g = await db.collection('config').doc('geral').get(); setupDone = !!(g.exists && g.data().setupDone); }catch(e){}
+  if(!setupDone){
+    if(!confirm('Ainda não existe nenhum proprietário cadastrado neste sistema.\n\nDeseja concluir o cadastro desta conta ('+user.email+') como PROPRIETÁRIO?')) return null;
+    const dados = {
+      name: user.displayName || user.email.split('@')[0], email: user.email,
+      bizName: 'Minha Barbearia', bizType: 'barbearia', phone:'', city:'', addr:'', cpf:'', cnpj:'',
+      createdAt: new Date().toISOString()
+    };
+    await ref.set(dados);
+    await db.collection('config').doc('geral').set({setupDone:true}, {merge:true});
+    toast('Cadastro de proprietário concluído! Complete seus dados em "Meu Perfil".','success');
+    return dados;
+  }
+  return null; // já existe um dono e não é essa conta
+}
 async function _adminLogin(){
   const email = document.getElementById('aLoginEmail').value.trim();
   const pass = document.getElementById('aLoginPass').value;
+  mostrarAviso('');
   if(!email||!pass) return toast('Preencha e-mail e senha', 'error');
+  let cred;
+  try{ cred = await auth.signInWithEmailAndPassword(email, pass); }
+  catch(e){ return toast(msgErroAuth(e), 'error'); }
   try{
-    const cred = await auth.signInWithEmailAndPassword(email, pass);
-    const doc = await db.collection('admins').doc(cred.user.uid).get();
-    if(!doc.exists){
+    const dados = await garantirAdmin(cred.user);
+    if(!dados){
+      const uid = cred.user.uid;
       await auth.signOut();
-      return toast('Esta conta não é de um administrador.', 'error');
+      mostrarAviso(`<strong>Esta conta não é de administrador.</strong><br>
+        O e-mail <b>${esc(email)}</b> existe, mas já há um proprietário cadastrado e esta conta não está autorizada.
+        Se você é o dono, abra o <b>Firebase Console → Firestore → coleção <code>admins</code></b> e crie um documento
+        com este ID (UID):<br><code id="uidAviso" style="display:block;margin:8px 0;word-break:break-all;user-select:all">${esc(uid)}</code>
+        com os campos <code>name</code> (texto) e <code>email</code> (texto). Depois é só entrar de novo.
+        <br><button class="status-btn confirm" style="margin-top:8px;padding:8px 14px;font-size:12px" onclick="copiarTexto('${esc(uid)}')">Copiar UID</button>`);
+      return;
     }
-    adminState.admin = {uid: cred.user.uid, ...doc.data()};
+    adminState.admin = {uid: cred.user.uid, ...dados};
     initAdminApp();
   }catch(e){
-    toast('Credenciais inválidas ['+(e.code||e.message)+']', 'error');
+    try{ await auth.signOut(); }catch(_){}
+    toast(msgErroAuth(e), 'error');
   }
 }
 async function _adminRegister(){
@@ -1223,24 +1369,33 @@ async function _adminRegister(){
   if(!name||!email||!biz||!phone||!pass) return toast('Preencha os campos obrigatórios', 'error');
   if(pass !== pass2) return toast('As senhas não coincidem', 'error');
   if(pass.length < 6) return toast('A senha precisa ter pelo menos 6 caracteres', 'error');
+  let cred;
+  try{ cred = await auth.createUserWithEmailAndPassword(email, pass); }
+  catch(e){
+    if(e.code === 'auth/email-already-in-use'){
+      switchAuthTab('login'); document.getElementById('aLoginEmail').value = email;
+      return toast('Esse e-mail já tem conta (talvez criada no site de cliente). Entre na aba "Entrar" com a mesma senha: o painel oferece concluir o cadastro de proprietário.', 'error');
+    }
+    return toast('Não foi possível criar a conta: ' + (e.code||e.message), 'error');
+  }
+  const admin = {
+    name, email, bizName: biz, bizType: type,
+    phone: phone.replace(/\D/g,''), city, addr, cpf, cnpj,
+    createdAt: new Date().toISOString()
+  };
   try{
-    const cred = await auth.createUserWithEmailAndPassword(email, pass);
-    const admin = {
-      name, email, bizName: biz, bizType: type,
-      phone: phone.replace(/\D/g,''), city, addr, cpf, cnpj,
-      createdAt: new Date().toISOString()
-    };
     await db.collection('admins').doc(cred.user.uid).set(admin);
     // Trava o cadastro público de admin: depois desse primeiro registro,
-    // as regras do Firestore (setupJaConcluido) bloqueiam novas contas admin.
+    // as regras do Firestore (setupDone) bloqueiam novas contas admin.
     await db.collection('config').doc('geral').set({adminPhone: admin.phone, setupDone: true}, {merge:true});
-    adminState.admin = {uid: cred.user.uid, ...admin};
-    toast(`Empresa "${biz}" cadastrada com sucesso! 🎉`, 'success');
-    setTimeout(initAdminApp, 800);
   }catch(e){
-    if(e.code === 'auth/email-already-in-use') toast('E-mail já cadastrado', 'error');
-    else toast('Não foi possível criar a conta: ' + e.message, 'error');
+    await auth.signOut().catch(()=>{});
+    switchAuthTab('login'); document.getElementById('aLoginEmail').value = email;
+    return toast('A conta foi criada, mas o banco recusou salvar os dados do proprietário ('+(e.code||e.message)+'). Tente entrar na aba "Entrar".', 'error');
   }
+  adminState.admin = {uid: cred.user.uid, ...admin};
+  toast(`Empresa "${biz}" cadastrada com sucesso! 🎉`, 'success');
+  setTimeout(initAdminApp, 800);
 }
 function adminLogout(){
   auth.signOut();
@@ -1254,15 +1409,25 @@ async function initAdminApp(){
   const a = adminState.admin;
   document.getElementById('authScreen').style.display = 'none';
   document.getElementById('adminApp').style.display = 'block';
-  document.getElementById('bizNameTag').textContent = a.bizName || 'Empresa';
-  document.getElementById('adminAvatarSide').textContent = (a.name||'A').charAt(0).toUpperCase();
-  document.getElementById('adminNameSide').textContent = a.name || 'Admin';
-  document.getElementById('adminRoleSide').textContent = a.bizName || 'Proprietário';
-  await carregarAdminServicos();
+  atualizarCabecalhoAdmin();
+  try{ await carregarAdminServicos(); }
+  catch(e){ console.error(e); toast('Não consegui carregar os serviços ('+(e.code||e.message)+'). Confira as regras do Firestore.','error'); }
   renderAdminServices();
   renderSettings();
-  await carregarExtrasAdmin();
+  try{ await carregarExtrasAdmin(); }catch(e){ console.error(e); toast('Erro ao carregar dados do painel ('+(e.code||e.message)+')','error'); }
   ouvirAgendamentosAdmin(); // dispara render dos agendamentos/dashboard/histórico em tempo real
+  if(typeof iniciarPerfilAdmin==='function') iniciarPerfilAdmin();
+}
+function atualizarCabecalhoAdmin(){
+  const a = adminState.admin; if(!a) return;
+  document.getElementById('bizNameTag').textContent = a.bizName || 'Empresa';
+  const av = document.getElementById('adminAvatarSide');
+  const foto = safeImg(a.foto);
+  if(foto){ av.innerHTML = `<img src="${esc(foto)}" alt="">`; } else { av.textContent = iniciais(a.name); }
+  document.getElementById('adminNameSide').textContent = a.name || 'Admin';
+  document.getElementById('adminRoleSide').textContent = a.cargo || 'Proprietário';
+  const tb = document.getElementById('topAvatar');
+  if(tb){ tb.innerHTML = foto ? `<img src="${esc(foto)}" alt="">` : esc(iniciais(a.name)); }
 }
 
 // ── SIDEBAR ───────────────────────────────────────────────────────────────────
@@ -1275,18 +1440,16 @@ function toggleSidebar(){
 const pageTitles = {
   dashboard:'📊 Dashboard', appointments:'📅 Agendamentos',
   calendar:'🗓 Calendário', clients:'👥 Clientes',
-  services:'✂ Serviços', barbers:'🧔 Barbeiros', gallery:'🖼 Galeria', site:'🌐 Site e Conteúdo', history:'📋 Histórico', settings:'⚙️ Configurações'
+  services:'✂ Serviços', barbers:'🧔 Barbeiros', gallery:'🖼 Galeria', site:'🌐 Site e Conteúdo', history:'📋 Histórico', profile:'👤 Meu Perfil', settings:'⚙️ Configurações'
 };
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById(id+'Page').classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  const items = document.querySelectorAll('.nav-item');
-  const map = ['dashboard','appointments','calendar','clients','services','barbers','gallery','site','history','settings'];
-  const idx = map.indexOf(id);
-  if(idx>=0) items[idx].classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.page===id));
   document.getElementById('pageTitle').textContent = pageTitles[id] || id;
   if(id==='calendar') renderAdminCalendar();
+  if(id==='profile' && typeof renderPerfilAdmin==='function') renderPerfilAdmin();
+  window.scrollTo({top:0});
   // Close mobile sidebar
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebarOverlay').classList.remove('visible');
@@ -1319,7 +1482,7 @@ function renderNotifications(){
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 function renderDashboard(){
-  const today = new Date().toISOString().slice(0,10);
+  const today = dateStrLocal();
   const todayAppts = adminState.bookings.filter(b=>b.date===today);
   const pending = adminState.bookings.filter(b=>b.status==='pending');
   const uniqueClients = [...new Set(adminState.bookings.map(b=>b.email||b.phone))];
@@ -1356,7 +1519,7 @@ function renderDashboard(){
   document.getElementById('dashPopServices').innerHTML = sorted.length ? sorted.map(([svc,cnt])=>`
     <div style="margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:13px">
-        <span>${svc}</span><strong>${cnt}</strong>
+        <span>${esc(svc)}</span><strong>${cnt}</strong>
       </div>
       <div style="height:6px;border-radius:3px;background:var(--bg3);overflow:hidden">
         <div style="height:100%;width:${(cnt/max)*100}%;background:var(--gold);border-radius:3px"></div>
@@ -1443,7 +1606,7 @@ function renderAdminCalendar(){
   for(let i=0;i<first;i++) html+=`<div class="big-cal-day empty"></div>`;
   for(let d=1;d<=days;d++){
     const dateStr = `${adminState.calYear}-${String(adminState.calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const today = now.toISOString().slice(0,10);
+    const today = dateStrLocal(now);
     const hasAppt = adminState.bookings.some(b=>b.date===dateStr&&b.status!=='cancelled');
     const isSelected = dateStr===adminState.selectedCalDay;
     let cls='big-cal-day';
@@ -1614,27 +1777,27 @@ function renderSettings(){
   document.getElementById('settingsBizInfo').innerHTML = `
     <div class="setting-row">
       <div class="setting-info"><div class="setting-label">Nome da Empresa</div></div>
-      <strong>${a.bizName||'—'}</strong>
+      <strong>${esc(a.bizName)||'—'}</strong>
     </div>
     <div class="setting-row">
       <div class="setting-info"><div class="setting-label">Proprietário</div></div>
-      <strong>${a.name||'—'}</strong>
+      <strong>${esc(a.name)||'—'}</strong>
     </div>
     <div class="setting-row">
       <div class="setting-info"><div class="setting-label">E-mail</div></div>
-      <strong>${a.email||'—'}</strong>
+      <strong>${esc(a.email)||'—'}</strong>
     </div>
     <div class="setting-row">
       <div class="setting-info"><div class="setting-label">WhatsApp</div></div>
-      <strong>${a.phone||'—'}</strong>
+      <strong>${esc(a.phone)||'—'}</strong>
     </div>
     <div class="setting-row">
       <div class="setting-info"><div class="setting-label">Cidade</div></div>
-      <strong>${a.city||'—'}</strong>
+      <strong>${esc(a.city)||'—'}</strong>
     </div>
     <div class="setting-row">
       <div class="setting-info"><div class="setting-label">Tipo de Negócio</div></div>
-      <strong style="text-transform:capitalize">${a.bizType||'—'}</strong>
+      <strong style="text-transform:capitalize">${esc(a.bizType)||'—'}</strong>
     </div>
   `;
 }
@@ -2019,14 +2182,17 @@ async function adminEsqueciSenha(){
 // Mantém a sessão do admin entre visitas (Firebase Auth cuida da persistência)
 auth.onAuthStateChanged(async (fbUser)=>{
   if(fbUser && !adminState.admin){
-    const doc = await db.collection('admins').doc(fbUser.uid).get();
-    if(doc.exists){
-      adminState.admin = {uid: fbUser.uid, ...doc.data()};
-      initAdminApp();
-    }
+    try{
+      const doc = await db.collection('admins').doc(fbUser.uid).get();
+      if(doc.exists){
+        adminState.admin = {uid: fbUser.uid, ...doc.data()};
+        initAdminApp();
+      }
+    }catch(e){ console.error('Sessão:', e); }
   }
 });
 </script>
+<script src="admin-perfil.js"></script>
 <script>
   if('serviceWorker' in navigator){
     window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js').catch(()=>{}));

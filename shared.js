@@ -6,6 +6,17 @@ const HOURS_PADRAO = ['08:00','08:30','09:00','09:30','10:00','10:30','11:00','1
 const DIAS_PT = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 const DIAS_EN = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
+// Serviços de exemplo: o painel do dono grava estes na 1ª vez, e o site do cliente
+// mostra estes enquanto o dono ainda não cadastrou nenhum (assim a lista nunca fica vazia).
+const SERVICOS_PADRAO = [
+  {name:'Corte Masculino', desc:'Tesoura ou máquina com acabamento', price:45, dur:45, icon:'✂'},
+  {name:'Barba Completa', desc:'Navalha, toalha quente e hidratação', price:35, dur:30, icon:'🪒'},
+  {name:'Corte + Barba', desc:'Combo completo cabelo e barba', price:70, dur:70, icon:'💈'},
+  {name:'Progressiva', desc:'Alisamento com escova e produto premium', price:120, dur:120, icon:'💁'},
+  {name:'Coloração', desc:'Pintura completa com finalização', price:90, dur:90, icon:'🎨'},
+  {name:'Hidratação', desc:'Tratamento profundo com máscara', price:60, dur:60, icon:'✨'},
+];
+
 // Horário padrão sugerido ao dono na 1ª vez (equivale ao horário antigo do site)
 function horariosSugeridos(){
   const h = {};
@@ -153,4 +164,36 @@ function comprimirImagem(file, maxLado=900, qualidade=0.8){
     img.onerror = ()=>{ URL.revokeObjectURL(url); reject(new Error('Não foi possível ler a imagem.')); };
     img.src = url;
   });
+}
+
+// Foto de perfil: quadrada, pequena (cabe folgado no Firestore)
+function comprimirAvatar(file){ return comprimirImagemCortada(file, 320, 0.82, 1); }
+// Corta no centro na proporção desejada (ratio = largura/altura) e reduz
+function comprimirImagemCortada(file, maxLado=900, qualidade=0.8, ratio=1){
+  return new Promise((resolve, reject)=>{
+    if(!file || !/^image\//.test(file.type)) return reject(new Error('Escolha um arquivo de imagem.'));
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = ()=>{
+      let sw = img.width, sh = img.height;
+      if(sw/sh > ratio){ sw = Math.round(sh*ratio); } else { sh = Math.round(sw/ratio); }
+      const sx = Math.round((img.width - sw)/2), sy = Math.round((img.height - sh)/2);
+      const esc = Math.min(1, maxLado/Math.max(sw, sh));
+      const c = document.createElement('canvas');
+      c.width = Math.round(sw*esc); c.height = Math.round(sh*esc);
+      c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL('image/jpeg', qualidade));
+    };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); reject(new Error('Não foi possível ler a imagem.')); };
+    img.src = url;
+  });
+}
+function iniciais(nome){
+  const p = String(nome||'').trim().split(/\s+/).filter(Boolean);
+  if(!p.length) return 'U';
+  return (p[0][0] + (p.length>1 ? p[p.length-1][0] : '')).toUpperCase();
+}
+function dataBR(ds){ // 'YYYY-MM-DD' -> '13/10/2026'
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ds||''); return m ? `${m[3]}/${m[2]}/${m[1]}` : (ds||'');
 }
