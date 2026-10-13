@@ -10,17 +10,20 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-// App Check: garante que só o próprio site (esse domínio) consegue falar com o Firebase.
-// A chave abaixo é a "chave de site" pública do reCAPTCHA Enterprise (não é segredo).
-// try/catch: se o App Check falhar (domínio não autorizado, script bloqueado etc.),
-// o site continua definindo "auth" e "db" em vez de quebrar tudo com "auth is not defined".
-try {
-  firebase.appCheck().activate(
-    new firebase.appCheck.ReCaptchaEnterpriseProvider('6LcqJ5wtAAAAALka6U0BcNjF-h2t9Th_P4NMAwOi'),
-    true // renova o token automaticamente
-  );
-} catch (e) {
-  console.error('App Check não pôde ser ativado:', e);
+// App Check (reCAPTCHA Enterprise): DESLIGADO por padrão, porque estava travando
+// o login e o cadastro (auth/network-request-failed). Para ligar de novo (depois de
+// autorizar o domínio do site na chave do reCAPTCHA), abra o site com ?appcheck=1.
+var APPCHECK_PULADO = !/[?&]appcheck=1/.test(location.search);
+if (!APPCHECK_PULADO) {
+  try {
+    firebase.appCheck().activate(
+      new firebase.appCheck.ReCaptchaEnterpriseProvider('6LcqJ5wtAAAAALka6U0BcNjF-h2t9Th_P4NMAwOi'),
+      true // renova o token automaticamente
+    );
+  } catch (e) {
+    window.APPCHECK_ERRO = String(e && (e.code || e.message) || e);
+    console.error('App Check não pôde ser ativado:', e);
+  }
 }
 
 const auth = firebase.auth();
